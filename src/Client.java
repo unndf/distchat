@@ -47,7 +47,7 @@ public class Client {
 				toSend = inFromUser.readLine();
 				
 				if (toSend.equals("quit"))		//Can change this later, just need a way to break out of loop
-					System.exit(0);
+					break;
 				
 				sendToServer.write(toSend + '\n');
 				sendToServer.flush();
