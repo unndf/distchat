@@ -29,17 +29,6 @@ public class Client {
 			BufferedWriter sendToServer	= new BufferedWriter( new OutputStreamWriter( socket.getOutputStream() ) );
 			BufferedReader receiveFromServer = new BufferedReader( new InputStreamReader( socket.getInputStream() ) );
 
-//			sendToServer.write("Initial Connection\n");
-//			sendToServer.flush();
-//			
-//
-//			incoming = receiveFromServer.readLine();
-
-			
-//			if (!incoming.equals("Connected")){
-//				System.out.println("Error receiving message");
-//				System.exit(0);
-//			}
 			while(true){		
 				// Get keyboard input from user, to send to server
 				System.out.print("Input Message: ");
