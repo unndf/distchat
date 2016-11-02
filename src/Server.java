@@ -28,14 +28,21 @@ public class Server extends Thread{
             {
                     //accept connections
                     Socket conn = socket.accept();
+                    System.out.println("Client " + conn.getInetAddress().getHostAddress() + " connected on port " + conn.getLocalPort() );
                     BufferedReader inReader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                     BufferedWriter outWriter = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream()));
+                    
                     //parse
-                    String message = inReader.readLine();
-                    System.out.println("recieved: " +  message);
-                    outWriter.write("Message Received\r\n");
-                    outWriter.flush();
-                    //send response
+                    String message = "";
+                    while ((message = inReader.readLine()) != null){
+                    	//send response
+                        System.out.println("recieved: " +  message);
+                        outWriter.write("Message Received\r\n");
+                        outWriter.flush();
+                    }
+                    System.out.println("Client Exited");
+                    inReader.close();
+                    outWriter.close();// close w
             } 
         } catch (IOException e) {
             e.printStackTrace();
