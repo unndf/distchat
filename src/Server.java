@@ -8,6 +8,7 @@ import java.nio.channels.*;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.nio.charset.Charset;
 
 public class Server extends Thread{
@@ -22,11 +23,17 @@ public class Server extends Thread{
     private ServerSocketChannel serverSocket = null;
     private HashMap<Integer,ByteBuffer> recieveBuffers = null;
     private HashMap<Integer,ByteBuffer> sendBuffers = null;
+    private LinkedList<Message> inQueue = null;
+    private LinkedList<Message> outQueue = null;
     private int currentSocketId = 0;
 
-    Server(int port) 
+    Server(int port, LinkedList<Message> inq, LinkedList<Message> outq) 
     {
         this.port = port;
+
+        //get a reference to the Message queues
+        inQueue = inq;
+        outQueue = outq;
         recieveBuffers = new HashMap<Integer,ByteBuffer>();
         sendBuffers = new HashMap<Integer,ByteBuffer>();
     }
@@ -58,7 +65,6 @@ public class Server extends Thread{
         	BufferedWriter toFile = new BufferedWriter(new OutputStreamWriter(outputStream));
         	int messageNum = 0;	// Keep track of the message number*/
 
-            
             //select()
             //Iterate through the keyset. Then:
             //accept()
@@ -182,7 +188,9 @@ public class Server extends Thread{
     }
     public static void main (String[] args) 
     {
-        Server mainServ = new Server(Integer.parseInt(args[0]));
+        LinkedList<Message> inq = new LinkedList<>();
+        LinkedList<Message> outq = new LinkedList<>();
+        Server mainServ = new Server(Integer.parseInt(args[0]),inq,outq);
         mainServ.start();
     }
 }

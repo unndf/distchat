@@ -1,27 +1,132 @@
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.io.*;
 
 public class Message
 {
-    //static message identifers MS_XYZ = #
-    public static final int MS_SEND = 1000;
-    public static final int MS_REGISTER = 1000;
+    /* 
+    * static message types M_XYZ = #
+    * These are the only valid message types
+    * When implementing a new message type make sure to:
+    *      Add a static message type identifier
+    *      Add a Pattern that recognizes the message format (remember to use regex flag dotall)
+    *      Add a method is*MessageType* that uses the pattern to determine if it is a valid message of that type
+    *      Add any methods used to extract data from the string
+    */
+    public static final String ENCODING = "UTF-8";
     
+    public static final int M_MSG_SEND = 1000;
+    public static final int M_REGISTER = 1001;
+    public static final int M_OPEN = 1002;
+   
+    //static patterns matching the messages
+    public static Pattern msgSendPattern;
+    public static Pattern registerPattern;
+    public static Pattern openPattern;
+
+    //message type
+    private int type = -1;
+    private String messageString = "";
+    
+    //init patterns
+    static
+    {
+        msgSendPattern = Pattern.compile("^message-send\\r?\\n([0-9]+)\\r?\\n([0-9]+)\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
+        registerPattern = Pattern.compile("^register\\r?\\n([\\w-]+)\\r?\\n",Pattern.DOTALL);
+        openPattern = Pattern.compile("^open\\r?\\n([\\d]+)\\r?\\n",Pattern.DOTALL);
+    }
+
     public Message ()
     {
     }
-    public static boolean isMessage (byte[] buff)
+    public Message (String messageString)
     {
-        //use regex for now
-        return false;
+        this.messageString = messageString;
+        this.type = getMessageType(messageString);
     }
+    public static boolean isMessage (ByteBuffer buff)
+    {
+        ByteBuffer buffCopy = buff.duplicate();
+        buffCopy.flip();
+        byte[] buffBytes = new byte[buffCopy.remaining()];
+        String messageString = new String (buffBytes,Charset.forName(ENCODING));
+
+        return ( isMessageSend(messageString) 
+                || isRegister(messageString)
+                || isOpen(messageString)
+                );
+        //use regex for now
+    }
+    
+    //TODO: ensure this operation is destructive
     public static Message getMessage (ByteBuffer buff)
     {
-        return null;
+        ByteBuffer buffCopy = buff.duplicate();
+        buffCopy.flip();
+        byte[] buffBytes = new byte[buffCopy.remaining()];
+        String messageString = new String (buffBytes,Charset.forName(ENCODING));
+
+        String retMessageString = ""; //message string for the message obj we're creating
+        Message retMessage = null;
+
+        if (isMessage(buff))
+        {
+            if(isMessageSend(messageString)){
+                Matcher m = msgSendPattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
+            else if (isRegister(messageString)){
+                Matcher m = registerPattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
+            else if (isOpen(messageString)){
+                Matcher m = registerPattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
+            retMessage = new Message(retMessageString);
+            int byteLen = 0;
+            try{
+                byteLen = retMessageString.getBytes(ENCODING).length; //inefficient...
+            } catch(UnsupportedEncodingException e){
+                e.printStackTrace();
+            }
+
+            //Take the string off the buffer
+            buff.position(byteLen-1);
+            buff.compact();
+        }   
+        return retMessage;
     }
-    public static int getMessageType ()
+    public static int getMessageType (String message)
     {
-        return 0;
+        if      (isMessageSend(message)) return M_MSG_SEND;
+        else if (isRegister(message))    return M_REGISTER;
+        else if (isOpen(message))        return M_OPEN;
+        else                             return -1; //not a valid message
+    }
+    public static boolean isMessageSend (String message)
+    {
+        Matcher m = msgSendPattern.matcher(message);
+        return m.matches();
+    }
+
+    public static boolean isRegister (String message)
+    {
+        Matcher m = registerPattern.matcher(message);
+        return m.matches();
+    }
+    public static boolean isOpen (String message)
+    {
+        Matcher m = openPattern.matcher(message);
+        return m.matches();
+    }
+    public String toString()
+    {
+        return messageString;
     }
 }
