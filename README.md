@@ -16,3 +16,5 @@ TODO, Eclipse *should* handle it automatically
 
 ##How to run##
     java -cp <distchat-x.x-DEMOx.jar> com.group7.distchat.<className> <arg 0> <arg 1> .. <arg n>
+
+Note: It can still be run with eclipse. It you create a build configuration for it update the README
