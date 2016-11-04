@@ -20,13 +20,15 @@ public class Server extends Thread{
     private boolean exit = false;
     private int port = 0;
     private ServerSocketChannel serverSocket = null;
-    private HashMap<Integer,ByteBuffer> socketBuffers = null;
+    private HashMap<Integer,ByteBuffer> recieveBuffers = null;
+    private HashMap<Integer,ByteBuffer> sendBuffers = null;
     private int currentSocketId = 0;
 
     Server(int port) 
     {
         this.port = port;
-        socketBuffers = new HashMap<Integer,ByteBuffer>();
+        recieveBuffers = new HashMap<Integer,ByteBuffer>();
+        sendBuffers = new HashMap<Integer,ByteBuffer>();
     }
     public void run () 
     {
@@ -50,6 +52,13 @@ public class Server extends Thread{
                                          null //no attachments
                                         );
 
+            //log files from first demo
+            File outputFile = new File("clientOutput.txt");
+        	FileOutputStream outputStream = new FileOutputStream(outputFile);
+        	BufferedWriter toFile = new BufferedWriter(new OutputStreamWriter(outputStream));
+        	int messageNum = 0;	// Keep track of the message number*/
+
+            
             //select()
             //Iterate through the keyset. Then:
             //accept()
@@ -84,7 +93,10 @@ public class Server extends Thread{
                                               SelectionKey.OP_READ,
                                               id
                                              );
-                    }
+
+                        //log
+                        toFile.append("**Client " + id +" joined chat room**\n");                   
+                    }//key.isacceptable()
 
                     //socket is ready to be read 
                     else if (key.isReadable())
@@ -93,7 +105,7 @@ public class Server extends Thread{
                         
                         //get the id and byteBuffer associated with this socket
                         int id = (int) key.attachment();
-                        ByteBuffer buff = socketBuffers.get(id);
+                        ByteBuffer buff = recieveBuffers.get(id);
 
                         //read
                         int bytesRecv = clientSocket.read(buff);
@@ -103,7 +115,9 @@ public class Server extends Thread{
                         {
                             System.out.println("Connection Closed " + clientSocket.socket());
                             key.cancel();
-                            socketBuffers.remove(id); 
+                            recieveBuffers.remove(id); 
+                            //log
+                            toFile.append("**Client " + id +" left chat room**\n");                   
                         }
                         //TODO: move to its own method
                         else 
@@ -115,49 +129,43 @@ public class Server extends Thread{
                             System.out.println(bytesRecv + " bytes recieved from id: " + id + "\nMessage: " +
                                     new String (byteString,Charset.forName(ENCODING)) 
                                               );
-                            addSocketBuffer(id); //reallocate buffer for now TODO
+                           
+                            //write recieved mesage to file
+                            toFile.append("Message " + messageNum + ": Client id: " + id + " " + new String(byteString,Charset.forName(ENCODING)));
+                            toFile.flush();
+                            messageNum++;
+                            
+                            String reply = "Message Received\r\n";
+                            
+                            //prepare send buff
+                            ByteBuffer sendbuff = ByteBuffer.wrap(reply.getBytes());
+                        
+                            //add sendbuff to the list of sending buffers
+                            sendBuffers.put(id,sendbuff);
+                            key.interestOps(SelectionKey.OP_WRITE); //we're only interested in writing to the socket now
+                            addSocketBuffer(id); //reallocate buffer for now, basically clear it TODO: account for partial reads
                         }
-                    }
+                    }//key.isReadable()
+
+                    else if (key.isWritable())
+                    {
+                        SocketChannel clientSocket = (SocketChannel) key.channel();
+
+                        int id = (int) key.attachment();
+                        ByteBuffer buff = sendBuffers.get(id); //get the buffer for the socket we're sending to
+                        
+                        clientSocket.write(buff);
+                        
+                        //done writing, continue reading
+                        if (!buff.hasRemaining()){
+                            key.interestOps(SelectionKey.OP_READ); //only interested in reading
+                            sendBuffers.remove(id);
+                        }
+                    } //key.isWritable();
 
                     readyIter.remove(); //remove current key 
                 }
             }
-            /*// Create a file to write the messages to
-        	File outputFile = new File("clientOutput.txt");
-        	FileOutputStream outputStream = new FileOutputStream(outputFile);
-        	BufferedWriter toFile = new BufferedWriter(new OutputStreamWriter(outputStream));
-        	int messageNum = 0;	// Keep track of the message number*/
-                /*
-	            	//accept connections
-	        		Socket conn = socket.accept();
-	                BufferedReader inReader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-	                BufferedWriter outWriter = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream()));
-	                toFile.append("**Client joined chat room**\n");                   
-	                toFile.flush();
-	                
-	                String message = "";
-	                
-                    while ((message = inReader.readLine()) != null){
-                    	//send response
-                        System.out.println("Recieved Message: " +  message);
-                        toFile.append("Message " + messageNum + ": " + message);
-                        toFile.newLine();
-                        toFile.flush();
-                        messageNum++;
-                        
-                        // Enforce communication delay
-                        Random rand = new Random();
-                        // Numbers between 1-10
-                        sleep((rand.nextInt(11)+1)*1000);
-                        outWriter.write("Message Received\r\n");		//Write back to client
-                        outWriter.flush();
-                    }
-                    System.out.println("Client Exited");
-                    toFile.append("**Client left chat room**\n\n");
-                    toFile.flush();
-                    inReader.close();
-                    outWriter.close();// close w
-        */            
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -170,7 +178,7 @@ public class Server extends Thread{
     private void addSocketBuffer (int id)
     {
         ByteBuffer buff = ByteBuffer.allocateDirect(MAX_BUFFER_SIZE);
-        socketBuffers.put(id,buff); 
+        recieveBuffers.put(id,buff); 
     }
     public static void main (String[] args) 
     {
