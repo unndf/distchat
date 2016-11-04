@@ -8,10 +8,15 @@ import java.nio.channels.*;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.HashMap;
+import java.nio.charset.Charset;
 
 public class Server extends Thread{
+    //constants
     public static final int MAX_MESSAGE_SIZE = 2048;
     public static final int MAX_BUFFER_SIZE = MAX_MESSAGE_SIZE * 2;    
+    public static final int SELECT_TIMEOUT = 500; //milliseconds    
+    public static final String ENCODING = "UTF-8";
+
     private boolean exit = false;
     private int port = 0;
     private ServerSocketChannel serverSocket = null;
@@ -21,6 +26,7 @@ public class Server extends Thread{
     Server(int port) 
     {
         this.port = port;
+        socketBuffers = new HashMap<Integer,ByteBuffer>();
     }
     public void run () 
     {
@@ -44,36 +50,76 @@ public class Server extends Thread{
                                          null //no attachments
                                         );
 
-        	Set<SelectionKey> readyKeys = sockSelector.selectedKeys();
-            Iterator<SelectionKey> readyIter = readyKeys.iterator();
-
+            //select()
             //Iterate through the keyset. Then:
             //accept()
             //read() / cont. read()
             //write / cont. write()
-            while (readyIter.hasNext())
+            while (!exit)
             {
-                SelectionKey key = readyIter.next();
+                int numKeys = sockSelector.select(SELECT_TIMEOUT);
 
-                //accept the new connection, make it non-blocking and register it with the selector
-                if (key.isAcceptable())
-                {
-                    SocketChannel clientSocket = serverSocket.accept();
-                    clientSocket.configureBlocking(false);
-                    int id = getSocketId();
-
-                    //associate this new socket with it's own bytebuffer
-                    addSocketBuffer(id); 
-                    clientSocket.register(sockSelector, 
-                                          SelectionKey.OP_READ,
-                                          id
-                                         );
+                //something went horribly wrong
+                if (numKeys < 0) {
+                    System.exit(1);
                 }
+                Set<SelectionKey> readyKeys = sockSelector.selectedKeys();
+                Iterator<SelectionKey> readyIter = readyKeys.iterator();
 
-                //socket is ready to be read 
-                else if (key.isReadable())
+                while (readyIter.hasNext())
                 {
-                    SocketChannel clientSocket = (SocketChannel) key.channel();
+                    SelectionKey key = readyIter.next();
+
+                    //accept the new connection, make it non-blocking and register it with the selector
+                    if (key.isAcceptable())
+                    {
+                        SocketChannel clientSocket = serverSocket.accept();
+                        clientSocket.configureBlocking(false);
+                        int id = getSocketId();
+
+                        System.out.println("New Connection " + clientSocket.socket());
+                        //associate this new socket with it's own bytebuffer
+                        addSocketBuffer(id); 
+                        clientSocket.register(sockSelector, 
+                                              SelectionKey.OP_READ,
+                                              id
+                                             );
+                    }
+
+                    //socket is ready to be read 
+                    else if (key.isReadable())
+                    {
+                        SocketChannel clientSocket = (SocketChannel) key.channel();
+                        
+                        //get the id and byteBuffer associated with this socket
+                        int id = (int) key.attachment();
+                        ByteBuffer buff = socketBuffers.get(id);
+
+                        //read
+                        int bytesRecv = clientSocket.read(buff);
+                       
+                        //connection closed, cancel the key, remove the <id,ByteBuffer> pair from our byteBuffer dict
+                        if (bytesRecv < 0)
+                        {
+                            System.out.println("Connection Closed " + clientSocket.socket());
+                            key.cancel();
+                            socketBuffers.remove(id); 
+                        }
+                        //TODO: move to its own method
+                        else 
+                        {
+                            buff.flip();
+                            byte[] byteString = new byte[buff.remaining()];
+                            buff.get(byteString);
+                            //echo
+                            System.out.println(bytesRecv + " bytes recieved from id: " + id + "\nMessage: " +
+                                    new String (byteString,Charset.forName(ENCODING)) 
+                                              );
+                            addSocketBuffer(id); //reallocate buffer for now TODO
+                        }
+                    }
+
+                    readyIter.remove(); //remove current key 
                 }
             }
             /*// Create a file to write the messages to
@@ -81,9 +127,6 @@ public class Server extends Thread{
         	FileOutputStream outputStream = new FileOutputStream(outputFile);
         	BufferedWriter toFile = new BufferedWriter(new OutputStreamWriter(outputStream));
         	int messageNum = 0;	// Keep track of the message number*/
-        	while (!exit)
-            {
-
                 /*
 	            	//accept connections
 	        		Socket conn = socket.accept();
@@ -114,12 +157,12 @@ public class Server extends Thread{
                     toFile.flush();
                     inReader.close();
                     outWriter.close();// close w
-                    
-            */} 
+        */            
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+    //TODO: This should be implemented as a stack and calls pop from the stack. This is to prevent the int wrap-around
     private int getSocketId () 
     {
         return ++(this.currentSocketId);
