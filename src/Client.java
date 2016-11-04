@@ -9,14 +9,11 @@ public class Client {
 	static String host = "";
 	static int port = -1;
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		
 		if (args.length != 2)
 			System.exit(1);
 
 		host	= args[0];
 		port	= Integer.parseInt( args[1] );
-		
 		String toSend		= null;
 		String incoming = "";
 		
