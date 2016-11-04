@@ -15,4 +15,4 @@ Distchat uses maven to build. Most eclipse installs come with the maven plugin p
 TODO, Eclipse *should* handle it automatically
 
 ##How to run##
-    java -cp <distchat-x.x-DEMOx.jar> com.group7.distchat.<className>' <arg 0> <arg 1> .. <arg n>
+    java -cp <distchat-x.x-DEMOx.jar> com.group7.distchat.<className> <arg 0> <arg 1> .. <arg n>
