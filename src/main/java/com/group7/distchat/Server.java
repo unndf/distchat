@@ -1,3 +1,5 @@
+package com.group7.distchat;
+
 import java.net.Socket;
 import java.util.Random;
 import java.net.ServerSocket;

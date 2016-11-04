@@ -1,3 +1,5 @@
+package com.group7.distchat;
+
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.nio.ByteBuffer;

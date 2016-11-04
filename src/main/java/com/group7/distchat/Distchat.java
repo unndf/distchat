@@ -1,3 +1,5 @@
+package com.group7.distchat;
+
 import java.util.LinkedList;
 
 public class Distchat extends Thread

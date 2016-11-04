@@ -1,3 +1,5 @@
+package com.group7.distchat;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.InputStreamReader;
