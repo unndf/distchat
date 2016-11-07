@@ -20,11 +20,11 @@ import java.util.logging.SimpleFormatter;
 public class Server extends Thread{
     //constants
     public static final int MAX_MESSAGE_SIZE = 2048;
-    public static final int MAX_BUFFER_SIZE = MAX_MESSAGE_SIZE * 2;    
-    public static final int SELECT_TIMEOUT = 500; //milliseconds    
+    public static final int MAX_BUFFER_SIZE = MAX_MESSAGE_SIZE * 2;
+    public static final int SELECT_TIMEOUT = 500; //milliseconds
     public static final String ENCODING = "UTF-8";
     public static final String LOGFILE = "server.log";
-    
+
     private boolean exit = false;
     private int port = 0;
     private Logger serverLog = Logger.getLogger("com.group7.distchat.Server");
@@ -35,7 +35,7 @@ public class Server extends Thread{
     private LinkedList<Message> outQueue = null;
     private int currentSocketId = 0;
 
-    Server(int port, LinkedList<Message> inq, LinkedList<Message> outq) 
+    Server(int port, LinkedList<Message> inq, LinkedList<Message> outq)
     {
         this.port = port;
         try {
@@ -51,14 +51,14 @@ public class Server extends Thread{
         recieveBuffers = new HashMap<Integer,ByteBuffer>();
         sendBuffers = new HashMap<Integer,ByteBuffer>();
     }
-    public void run () 
+    public void run ()
     {
-        
+
         try
         {
-            //open a selector 
+            //open a selector
             Selector sockSelector = Selector.open();
-            
+
             //open serverSocketChannel and bind to a port
             serverSocket = ServerSocketChannel.open();
             InetSocketAddress serverAddress = new InetSocketAddress("127.0.0.1", port);
@@ -66,7 +66,7 @@ public class Server extends Thread{
 
             //make the socketChannel  non-blocking
             serverSocket.configureBlocking(false);
-            
+
             //register socketChannel with the selector
             serverSocket.register(sockSelector,
                                          serverSocket.validOps(),
@@ -93,6 +93,11 @@ public class Server extends Thread{
                 if (numKeys < 0) {
                     System.exit(1);
                 }
+
+                //TODO:***********IMPORTANT******************************
+                //TODO: refilling the sendBuffers from queue should probably be done here
+                //TODO:***********IMPORTANT******************************
+                
                 Set<SelectionKey> readyKeys = sockSelector.selectedKeys();
                 Iterator<SelectionKey> readyIter = readyKeys.iterator();
 
@@ -109,71 +114,69 @@ public class Server extends Thread{
 
                         System.out.println("New Connection " + clientSocket.socket());
                         //associate this new socket with it's own bytebuffer
-                        addSocketBuffer(id); 
-                        clientSocket.register(sockSelector, 
+                        addSocketBuffer(id);
+                        clientSocket.register(sockSelector,
                                               SelectionKey.OP_READ,
                                               id
                                              );
 
                         //log
-                        toFile.append("**Client " + id +" joined chat room**\n");                   
+                        toFile.append("**Client " + id +" joined chat room**\n");
                     }//key.isacceptable()
 
-                    //socket is ready to be read 
+                    //socket is ready to be read
                     else if (key.isReadable())
                     {
                         SocketChannel clientSocket = (SocketChannel) key.channel();
-                        
+
                         //get the id and byteBuffer associated with this socket
                         int id = (int) key.attachment();
                         ByteBuffer buff = recieveBuffers.get(id);
 
                         //read
                         int bytesRecv = clientSocket.read(buff);
-                       
+
                         //connection closed, cancel the key, remove the <id,ByteBuffer> pair from our byteBuffer dict
                         if (bytesRecv < 0)
                         {
                             System.out.println("Connection Closed " + clientSocket.socket());
                             key.cancel();
-                            recieveBuffers.remove(id); 
+                            recieveBuffers.remove(id);
                             //log
                             toFile.append("**Client " + id +" left chat room**\n");
                         }
-                        //TODO: move to its own method
-                        else 
+                        else
                         {
                             //buff.flip();
                             //byte[] byteString = new byte[buff.remaining()];
                             //buff.get(byteString);
-                            
+
                             if (Message.isMessage(buff))
                             {
                                 Message message = Message.getMessage (buff);
-                                inQueue.push(message);
-                                
-                                String reply = "Message Received\r\n";
-                            
+                                message.id = id;
+
+                                synchronized(inQueue){
+                                    inQueue.push(message); //put recieved message on the queue
+                                    inQueue.notify(); //tell application we have a message
+                                }
+
+                                String reply = message.toString();
+
                                 //prepare send buff
                                 ByteBuffer sendbuff = ByteBuffer.wrap(reply.getBytes());
-                        
+
                                 //add sendbuff to the list of sending buffers
                                 sendBuffers.put(id,sendbuff);
                                 key.interestOps(SelectionKey.OP_WRITE); //we're only interested in writing to the socket now
                             }
                             else
                             {
+                                //continue reading
+                                //log that we recv. bytes
+                                serverLog.log(Level.INFO, "Partial Message recv" + bytesRecv);
                             }
-                            //echo
-                            //System.out.println(bytesRecv + " bytes recieved from id: " + id + "\nMessage: " +
-                            //        new String (byteString,Charset.forName(ENCODING)) 
-                            //                  );
-    
-                            //write recieved mesage to file
-                            //toFile.append("Message " + messageNum + ": Client id: " + id + " " + new String(byteString,Charset.forName(ENCODING)));
-                            //toFile.flush();
-                            //messageNum++;
-                            
+
                         }
                     }//key.isReadable()
 
@@ -183,9 +186,9 @@ public class Server extends Thread{
 
                         int id = (int) key.attachment();
                         ByteBuffer buff = sendBuffers.get(id); //get the buffer for the socket we're sending to
-                        
+
                         clientSocket.write(buff);
-                        
+
                         //done writing, continue reading
                         if (!buff.hasRemaining()){
                             key.interestOps(SelectionKey.OP_READ); //only interested in reading
@@ -193,7 +196,7 @@ public class Server extends Thread{
                         }
                     } //key.isWritable();
 
-                    readyIter.remove(); //remove current key 
+                    readyIter.remove(); //remove current key
                 }
             }
         } catch (IOException e) {
@@ -201,16 +204,16 @@ public class Server extends Thread{
         }
     }
     //TODO: This should be implemented as a stack and calls pop from the stack. This is to prevent the int wrap-around
-    private int getSocketId () 
+    private int getSocketId ()
     {
         return ++(this.currentSocketId);
     }
     private void addSocketBuffer (int id)
     {
         ByteBuffer buff = ByteBuffer.allocateDirect(MAX_BUFFER_SIZE);
-        recieveBuffers.put(id,buff); 
+        recieveBuffers.put(id,buff);
     }
-    public static void main (String[] args) 
+    public static void main (String[] args)
     {
         LinkedList<Message> inq = new LinkedList<>();
         LinkedList<Message> outq = new LinkedList<>();

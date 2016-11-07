@@ -30,6 +30,7 @@ public class Message
     public static Pattern openPattern;
     public static Pattern echoPattern;
 
+    public int id = -1;
     //message type
     private int type = -1;
     private String messageString = "";
