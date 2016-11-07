@@ -40,7 +40,7 @@ public class Message
         msgSendPattern = Pattern.compile("^message-send\\r?\\n([0-9]+)\\r?\\n([0-9]+)\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
         registerPattern = Pattern.compile("^register\\r?\\n([\\w-]+)\\r?\\n",Pattern.DOTALL);
         openPattern = Pattern.compile("^open\\r?\\n([\\d]+)\\r?\\n",Pattern.DOTALL);
-        echoPattern = Pattern.compile("echo\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
+        echoPattern = Pattern.compile("^echo\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
     }
 
     public Message ()
@@ -90,7 +90,7 @@ public class Message
                 retMessageString = m.group(0);
             }
             else if (isOpen(messageString)){
-                Matcher m = registerPattern.matcher(messageString);
+                Matcher m = openPattern.matcher(messageString);
                 m.find();
                 retMessageString = m.group(0);
             }
@@ -107,7 +107,6 @@ public class Message
                 e.printStackTrace();
             }
 
-            System.out.println("new pos: " + (byteLen-1) + " current pos: " + buff.position());
             //Take the string off the buffer
             buffCopy.position(byteLen-1);
             buff.compact();
