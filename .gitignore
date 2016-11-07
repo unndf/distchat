@@ -1,2 +1,4 @@
 *.class
 *.list
+*.jar
+clientOutput.txt

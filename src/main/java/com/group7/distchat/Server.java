@@ -12,6 +12,10 @@ import java.util.Set;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.nio.charset.Charset;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.FileHandler;
+import java.util.logging.SimpleFormatter;
 
 public class Server extends Thread{
     //constants
@@ -19,9 +23,11 @@ public class Server extends Thread{
     public static final int MAX_BUFFER_SIZE = MAX_MESSAGE_SIZE * 2;    
     public static final int SELECT_TIMEOUT = 500; //milliseconds    
     public static final String ENCODING = "UTF-8";
-
+    public static final String LOGFILE = "server.log";
+    
     private boolean exit = false;
     private int port = 0;
+    private Logger serverLog = Logger.getLogger("com.group7.distchat.Server");
     private ServerSocketChannel serverSocket = null;
     private HashMap<Integer,ByteBuffer> recieveBuffers = null;
     private HashMap<Integer,ByteBuffer> sendBuffers = null;
@@ -32,7 +38,13 @@ public class Server extends Thread{
     Server(int port, LinkedList<Message> inq, LinkedList<Message> outq) 
     {
         this.port = port;
-
+        try {
+            FileHandler fh = new FileHandler (LOGFILE);
+            fh.setFormatter(new SimpleFormatter());
+            serverLog.addHandler(fh);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
         //get a reference to the Message queues
         inQueue = inq;
         outQueue = outq;
@@ -61,6 +73,7 @@ public class Server extends Thread{
                                          null //no attachments
                                         );
 
+            serverLog.log(Level.INFO, "Server started on port " + this.port);
             //log files from first demo
             File outputFile = new File("clientOutput.txt");
         	FileOutputStream outputStream = new FileOutputStream(outputFile);
@@ -125,33 +138,42 @@ public class Server extends Thread{
                             key.cancel();
                             recieveBuffers.remove(id); 
                             //log
-                            toFile.append("**Client " + id +" left chat room**\n");                   
+                            toFile.append("**Client " + id +" left chat room**\n");
                         }
                         //TODO: move to its own method
                         else 
                         {
-                            buff.flip();
-                            byte[] byteString = new byte[buff.remaining()];
-                            buff.get(byteString);
-                            //echo
-                            System.out.println(bytesRecv + " bytes recieved from id: " + id + "\nMessage: " +
-                                    new String (byteString,Charset.forName(ENCODING)) 
-                                              );
-                           
-                            //write recieved mesage to file
-                            toFile.append("Message " + messageNum + ": Client id: " + id + " " + new String(byteString,Charset.forName(ENCODING)));
-                            toFile.flush();
-                            messageNum++;
+                            //buff.flip();
+                            //byte[] byteString = new byte[buff.remaining()];
+                            //buff.get(byteString);
                             
-                            String reply = "Message Received\r\n";
+                            if (Message.isMessage(buff))
+                            {
+                                Message message = Message.getMessage (buff);
+                                inQueue.push(message);
+                                
+                                String reply = "Message Received\r\n";
                             
-                            //prepare send buff
-                            ByteBuffer sendbuff = ByteBuffer.wrap(reply.getBytes());
+                                //prepare send buff
+                                ByteBuffer sendbuff = ByteBuffer.wrap(reply.getBytes());
                         
-                            //add sendbuff to the list of sending buffers
-                            sendBuffers.put(id,sendbuff);
-                            key.interestOps(SelectionKey.OP_WRITE); //we're only interested in writing to the socket now
-                            addSocketBuffer(id); //reallocate buffer for now, basically clear it TODO: account for partial reads
+                                //add sendbuff to the list of sending buffers
+                                sendBuffers.put(id,sendbuff);
+                                key.interestOps(SelectionKey.OP_WRITE); //we're only interested in writing to the socket now
+                            }
+                            else
+                            {
+                            }
+                            //echo
+                            //System.out.println(bytesRecv + " bytes recieved from id: " + id + "\nMessage: " +
+                            //        new String (byteString,Charset.forName(ENCODING)) 
+                            //                  );
+    
+                            //write recieved mesage to file
+                            //toFile.append("Message " + messageNum + ": Client id: " + id + " " + new String(byteString,Charset.forName(ENCODING)));
+                            //toFile.flush();
+                            //messageNum++;
+                            
                         }
                     }//key.isReadable()
 
