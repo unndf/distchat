@@ -6,33 +6,41 @@ import java.nio.*;
 
 public class TestMessageGet
 {
-    //String msgString = "echo\nhello world\n"; //echo message
-    String msgString = "echo\nhello world\n"; //echo message
-    ByteBuffer buff = ByteBuffer.wrap(msgString.getBytes());
-    
-    @Test
-    public void itWerks()
-    {
-        assertTrue( true );
-    }
-
     @Test
     public void isEchoString()
     {
+        //ECHO regex works
+        String msgString = "echo\nhello world\n"; //echo message
+        ByteBuffer buff = ByteBuffer.wrap(msgString.getBytes());
         assertTrue(Message.isEcho(msgString)); //the string *IS* an echo message
     }
+
     @Test
     public void isMessage()
     {
+        String msgString = "echo\nhello world\n"; //echo message
+        ByteBuffer buff = ByteBuffer.wrap(msgString.getBytes());
         assertTrue(Message.isMessage(buff));
     }
 
     @Test 
     public void getMessage()
     {
-        buff.position(buff.limit());
+        //put echo message into a byteBuffer
+        String msgString = "echo\nhello world\n"; //echo message
+        ByteBuffer buff = ByteBuffer.wrap(msgString.getBytes());
+        
+        //Buffer has a message
         assertTrue(Message.isMessage(buff));
+        
         Message m = Message.getMessage(buff);
-        assertNotNull (m);
+
+        //The message we get is not null
+        assertNotNull(m);
+
+        //The message we get is of type ECHO
+        assertEquals(m.getMessageType(), Message.M_ECHO);
+
+        //SUCCESS!!
     }
 }

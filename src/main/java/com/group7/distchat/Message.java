@@ -69,8 +69,9 @@ public class Message
     public static Message getMessage (ByteBuffer buff)
     {
         ByteBuffer buffCopy = buff.duplicate();
-        buffCopy.flip();
-        byte[] buffBytes = new byte[buffCopy.remaining()];
+        
+        byte[] buffBytes = new byte[buffCopy.limit()];
+        buffCopy.get(buffBytes);
         String messageString = new String (buffBytes,Charset.forName(ENCODING));
 
         String retMessageString = ""; //message string for the message obj we're creating
@@ -106,8 +107,9 @@ public class Message
                 e.printStackTrace();
             }
 
+            System.out.println("new pos: " + (byteLen-1) + " current pos: " + buff.position());
             //Take the string off the buffer
-            buff.position(byteLen-1);
+            buffCopy.position(byteLen-1);
             buff.compact();
         }   
         return retMessage;
@@ -140,6 +142,10 @@ public class Message
     {
         Matcher m = echoPattern.matcher(message);
         return m.matches();
+    }
+    public int getMessageType ()
+    {
+        return this.type;
     }
     public String toString()
     {
