@@ -20,6 +20,14 @@ public class Distchat extends Thread
     public static final String LOGFILE = "server.log";
 
 
+    /** Distchat - A Distributed Chat Application
+     * This constructor creates a new instance of dischat and binds it to the given port
+     * It then spawns a server thread and its own QueueWorker to take jobs off the queue and proccess them
+     * It is possible to have more than one QueueWorker (eventually), otherwise a single worker will handle all requests in a non-blocking fashion
+     * @param int port
+     * @see Server
+     * @see Message
+     */
     public Distchat(int port)
     {
         this.port = port;
@@ -77,7 +85,7 @@ public class Distchat extends Thread
                     Message request = null;
                     synchronized (inQueue) {
                         request = inQueue.pop();
-                        appLog.log(Level.INFO, "App recv. " + request);
+                        appLog.log(Level.INFO, "Application recieved message:\n" + "********************\n" + request + "\n*******************\n");
                     }
                     //get a response
                     Message response = getResponse(request);
