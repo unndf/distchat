@@ -37,8 +37,11 @@ public class Client {
 				if (toSend.equals("quit"))		//Can change this later, just need a way to break out of loop
 					break;
 				
-				sendToServer.write(toSend + '\n');
-				sendToServer.flush();
+				//sendToServer.write("echo\n" + toSend + "\n");
+				//sendToServer.write("echo\nhello\n");
+				socket.getOutputStream().write(("echo\n"+toSend+"\n").getBytes());
+                //sendToServer.write("echo\n" + toSend + "\n");
+				//sendToServer.flush();
 				
 				// Response back from server
 				incoming = receiveFromServer.readLine();

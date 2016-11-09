@@ -23,12 +23,14 @@ public class Message
     public static final int M_REGISTER = 1001;
     public static final int M_OPEN = 1002;
     public static final int M_ECHO = 1003;
+    public static final int M_ERROR = 1004;
    
     //static patterns matching the messages
     public static Pattern msgSendPattern;
     public static Pattern registerPattern;
     public static Pattern openPattern;
     public static Pattern echoPattern;
+    public static Pattern errorPattern;
 
     public int id = -1;
     //message type
@@ -42,6 +44,7 @@ public class Message
         registerPattern = Pattern.compile("^register\\r?\\n([\\w-]+)\\r?\\n",Pattern.DOTALL);
         openPattern = Pattern.compile("^open\\r?\\n([\\d]+)\\r?\\n",Pattern.DOTALL);
         echoPattern = Pattern.compile("^echo\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
+        errorPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
     }
 
     public Message ()
@@ -55,14 +58,15 @@ public class Message
     public static boolean isMessage (ByteBuffer buff)
     {
         ByteBuffer buffCopy = buff.duplicate();
-        byte[] buffBytes = new byte[buff.limit()];
+        buffCopy.position(0);
+        byte[] buffBytes = new byte[buffCopy.limit()];
         buffCopy.get(buffBytes);
         String messageString = new String (buffBytes,Charset.forName(ENCODING));
-
         return ( isMessageSend(messageString) 
                 || isRegister(messageString)
                 || isOpen(messageString)
                 || isEcho(messageString)
+                //|| isError(messageString)
                 );
         //use regex for now
     }
@@ -70,6 +74,7 @@ public class Message
     public static Message getMessage (ByteBuffer buff)
     {
         ByteBuffer buffCopy = buff.duplicate();
+        buffCopy.position(0);
         
         byte[] buffBytes = new byte[buffCopy.limit()];
         buffCopy.get(buffBytes);
@@ -109,7 +114,8 @@ public class Message
             }
 
             //Take the string off the buffer
-            buffCopy.position(byteLen-1);
+            //buffCopy.position(byteLen-1);
+            //buffCopy.position(byteLen);
             buff.compact();
         }   
         return retMessage;
@@ -141,7 +147,7 @@ public class Message
     public static boolean isEcho(String message)
     {
         Matcher m = echoPattern.matcher(message);
-        return m.matches();
+        return m.find();
     }
     public int getMessageType ()
     {

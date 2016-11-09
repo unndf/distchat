@@ -50,6 +50,10 @@ public class Server extends Thread{
         outQueue = outq;
         recieveBuffers = new HashMap<Integer,ByteBuffer>();
         sendBuffers = new HashMap<Integer,ByteBuffer>();
+
+        //start our worker
+        QueueWorker worker = new QueueWorker();
+        worker.start();
     }
     public void run ()
     {
@@ -74,11 +78,6 @@ public class Server extends Thread{
                                         );
 
             serverLog.log(Level.INFO, "Server started on port " + this.port);
-            //log files from first demo
-            File outputFile = new File("clientOutput.txt");
-        	FileOutputStream outputStream = new FileOutputStream(outputFile);
-        	BufferedWriter toFile = new BufferedWriter(new OutputStreamWriter(outputStream));
-        	int messageNum = 0;	// Keep track of the message number*/
 
             //select()
             //Iterate through the keyset. Then:
@@ -119,9 +118,6 @@ public class Server extends Thread{
                                               SelectionKey.OP_READ,
                                               id
                                              );
-
-                        //log
-                        toFile.append("**Client " + id +" joined chat room**\n");
                     }//key.isacceptable()
 
                     //socket is ready to be read
@@ -142,15 +138,9 @@ public class Server extends Thread{
                             System.out.println("Connection Closed " + clientSocket.socket());
                             key.cancel();
                             recieveBuffers.remove(id);
-                            //log
-                            toFile.append("**Client " + id +" left chat room**\n");
                         }
                         else
                         {
-                            //buff.flip();
-                            //byte[] byteString = new byte[buff.remaining()];
-                            //buff.get(byteString);
-
                             if (Message.isMessage(buff))
                             {
                                 Message message = Message.getMessage (buff);
@@ -159,8 +149,9 @@ public class Server extends Thread{
                                 synchronized(inQueue){
                                     inQueue.push(message); //put recieved message on the queue
                                     inQueue.notify(); //tell application we have a message
+                                    serverLog.log(Level.INFO, "Message Queued for application and notify()");
                                 }
-
+/*
                                 String reply = message.toString();
 
                                 //prepare send buff
@@ -168,6 +159,7 @@ public class Server extends Thread{
 
                                 //add sendbuff to the list of sending buffers
                                 sendBuffers.put(id,sendbuff);
+                                */
                                 key.interestOps(SelectionKey.OP_WRITE); //we're only interested in writing to the socket now
                             }
                             else
@@ -185,14 +177,16 @@ public class Server extends Thread{
                         SocketChannel clientSocket = (SocketChannel) key.channel();
 
                         int id = (int) key.attachment();
-                        ByteBuffer buff = sendBuffers.get(id); //get the buffer for the socket we're sending to
+                        if(sendBuffers.containsKey(id)){
+                            ByteBuffer buff = sendBuffers.get(id); //get the buffer for the socket we're sending to
 
-                        clientSocket.write(buff);
+                            clientSocket.write(buff);
 
-                        //done writing, continue reading
-                        if (!buff.hasRemaining()){
-                            key.interestOps(SelectionKey.OP_READ); //only interested in reading
-                            sendBuffers.remove(id);
+                            //done writing, continue reading
+                            if (!buff.hasRemaining()){
+                                key.interestOps(SelectionKey.OP_READ); //only interested in reading
+                                sendBuffers.remove(id);
+                            }
                         }
                     } //key.isWritable();
 
@@ -219,5 +213,33 @@ public class Server extends Thread{
         LinkedList<Message> outq = new LinkedList<>();
         Server mainServ = new Server(Integer.parseInt(args[0]),inq,outq);
         mainServ.start();
+    }
+    public class QueueWorker extends Thread
+    {
+        public QueueWorker()
+        {
+        }
+        public void run()
+        {
+            while (true)
+            {
+                try
+                {
+                    synchronized(outQueue){
+                        outQueue.wait(); //wait for messages to send
+                    }
+                } catch (InterruptedException e){
+                    e.printStackTrace();//do nothing
+                }
+                while (!outQueue.isEmpty())
+                {
+                    Message response = outQueue.pop();
+                    byte[] responseBytes = response.toString().getBytes();
+                    ByteBuffer sendBuffer = ByteBuffer.wrap(responseBytes);
+                    int id = response.id;
+                    sendBuffers.put(id,sendBuffer);
+                }
+            }
+        }
     }
 }
