@@ -91,15 +91,18 @@ public class Server extends Thread{
 
             //open serverSocketChannel and bind to a port
             serverSocket = ServerSocketChannel.open();
-            InetSocketAddress serverAddress = new InetSocketAddress("127.0.0.1", port);
-            serverSocket.bind(serverAddress);
-
+            
             //make the socketChannel  non-blocking
             serverSocket.configureBlocking(false);
+            InetSocketAddress serverAddress = new InetSocketAddress(port);
+            
+            serverSocket.socket().bind(serverAddress);
+
 
             //register socketChannel with the selector
             serverSocket.register(sockSelector,
-                                         serverSocket.validOps(),
+                                        SelectionKey.OP_ACCEPT, 
+                                        //serverSocket.validOps(),
                                          null //no attachments
                                         );
 
