@@ -5,12 +5,15 @@ import java.util.logging.Logger;
 import java.util.logging.FileHandler;
 import java.util.logging.SimpleFormatter;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.HashMap;
 import java.io.*;
 
 public class Distchat extends Thread
 {
     private LinkedList<Message> inQueue  = new LinkedList<Message>();
     private LinkedList<Message> outQueue = new LinkedList<Message>();
+    private Map<Integer,String> roomList = new HashMap<Integer,String>();
     private Logger appLog = Logger.getLogger("com.group7.distchat.Distchat");
     private Server server = null;
     private int port = -1;
@@ -41,6 +44,12 @@ public class Distchat extends Thread
     }
     public void run ()
     {
+        //Temporary TODO: Let users add the rooms (somehow....)
+        roomList.put(0,"Some room name");
+        roomList.put(1,"Another room");
+        roomList.put(2,"Demo room");
+        roomList.put(3,"Best room");
+
         server = new Server(port,inQueue, outQueue);
         //start the server thread
         server.start();
@@ -51,7 +60,7 @@ public class Distchat extends Thread
         worker.start();
         while(!exit)
         {
-            //nothing
+            //nothing lol
         }
 
     }
@@ -99,7 +108,11 @@ public class Distchat extends Thread
         }
         public Message getResponse (Message message)
         {
+            //if type echo
             return message; //echo all messages back
+            //if type open
+            //if type info
+            //if type get message
         }
     }
 }
