@@ -30,6 +30,7 @@ public class Message
     public static final int M_USER_ID = 1007;
     public static final int M_CHATROOM_ID = 1008;
     public static final int M_MSG = 1009;
+    public static final int M_LOGIN = 1010;
    
     //static patterns matching the messages
     public static Pattern msgSendPattern;
@@ -42,6 +43,7 @@ public class Message
     public static Pattern userIDPattern;
     public static Pattern chatRoomIDPattern;
     public static Pattern msgPattern;
+    public static Pattern loginPattern;
 
     public int id = M_INVALID;
     //message type
@@ -61,6 +63,7 @@ public class Message
         userIDPattern = Pattern.compile("^userID\\r?\\n([0-9]+)\\r\\n", Pattern.DOTALL);
         chatRoomIDPattern = Pattern.compile("^chatRoomID\\r?\\n([0-9]+)\\r\\n", Pattern.DOTALL);
         msgPattern = Pattern.compile("^msg\\r?\\n(.+)\\r\\n", Pattern.DOTALL);
+        loginPattern = Pattern.compile("^login\\r?\\n(.+)\\r\\n", Pattern.DOTALL);
         
     }
 
@@ -97,6 +100,7 @@ public class Message
                 || isUserID(messageString)
                 || isChatRoomID(messageString)
                 || isMsg(messageString)
+                || isLogin(messageString)
                 );
         //use regex for now
     }
@@ -185,6 +189,11 @@ public class Message
                 m.find();
                 retMessageString = m.group(0);
             }
+            else if (isLogin(messageString)){
+                Matcher m = loginPattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
             retMessage = new Message(retMessageString);
             int byteLen = 0;
             try{
@@ -215,6 +224,7 @@ public class Message
         else if (isUserID(message))      return M_USER_ID;
         else if (isChatRoomID(message))  return M_CHATROOM_ID;
         else if (isMsg(message))  		 return M_MSG;
+        else if (isLogin(message))  	 return M_LOGIN;
         else                             return M_INVALID; //not a valid message
     }
     /**
@@ -283,6 +293,11 @@ public class Message
     public static boolean isMsg(String message)
     {
         Matcher m = msgPattern.matcher(message);
+        return m.find();
+    }
+    public static boolean isLogin(String message)
+    {
+        Matcher m = loginPattern.matcher(message);
         return m.find();
     }
     public int getMessageType ()
