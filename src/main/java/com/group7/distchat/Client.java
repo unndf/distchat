@@ -13,9 +13,17 @@ import java.util.regex.Matcher;
 
 public class Client {
     public static Pattern ipWithPortPattern;
+    public static Pattern openCommandPattern;
+    public static Pattern registerCommandPattern;
+    public static Pattern connectCommandPattern;
+    public static Pattern leaveCommandPattern;
     static 
     {
         ipWithPortPattern = Pattern.compile("(\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d):(\\d?\\d?\\d?\\d?\\d)"); //NOTE: ONLY IPV4 IS SUPPORTED
+        openCommandPattern = Pattern.compile("!open\\s+([\\w-]+)");
+        connectCommandPattern = Pattern.compile("!connect\\s+(\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d):(\\d?\\d?\\d?\\d)");
+        registerCommandPattern = Pattern.compile("!register\\s+([\\w-]+)");
+        leaveCommandPattern = Pattern.compile("!leave\\s+([\\w-]+)");
     }
 
     //Art is VERY important....
@@ -73,8 +81,40 @@ public class Client {
         //  wait for interrupts from workers
         while(true)
         {
+            String input = console.readLine(); //get input from user
+            if (isOpenCommand(input))
+            {
+                System.out.println("wow nice open");
+            }
+            else if (isConnectCommand(input))
+            {
+                System.out.println("wow nice connect");
+            }
+            else if (isRegisterCommand(input))
+            {
+                System.out.println("wow nice register");
+            }
+            else
+            {
+                System.out.println("Please enter a valid command");
+            }
         }
 	} // main
+    public static boolean isOpenCommand (String command)
+    {
+        Matcher m = openCommandPattern.matcher(command);
+        return m.find();
+    }
+    public static boolean isConnectCommand (String command)
+    {
+        Matcher m = connectCommandPattern.matcher(command);
+        return m.find();
+    }
+    public static boolean isRegisterCommand (String command)
+    {
+        Matcher m = registerCommandPattern.matcher(command);
+        return m.find();
+    }
     public class NetworkReader extends Thread
     {
         public void run()
