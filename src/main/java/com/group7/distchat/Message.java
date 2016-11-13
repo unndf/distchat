@@ -31,6 +31,12 @@ public class Message
     public static final int M_CHATROOM_ID = 1008;
     public static final int M_MSG = 1009;
     public static final int M_LOGIN = 1010;
+    public static final int M_CONNECT = 1011;
+    public static final int M_POLL = 1012;
+    public static final int M_PACKAGE = 1013;
+    public static final int M_ACCEPT = 1014;
+    public static final int M_INFO = 1015;
+    public static final int M_REPLICA_CONNECT = 1016;
    
     //static patterns matching the messages
     public static Pattern msgSendPattern;
@@ -44,6 +50,12 @@ public class Message
     public static Pattern chatRoomIDPattern;
     public static Pattern msgPattern;
     public static Pattern loginPattern;
+    public static Pattern connectPattern;
+    public static Pattern pollPattern;
+    public static Pattern packagePattern;
+    public static Pattern acceptPattern;
+    public static Pattern infoPattern;
+    public static Pattern replicaConnectPattern;
 
     public int id = M_INVALID;
     //message type
@@ -64,7 +76,13 @@ public class Message
         chatRoomIDPattern = Pattern.compile("^chatRoomID\\r?\\n([0-9]+)\\r\\n", Pattern.DOTALL);
         msgPattern = Pattern.compile("^msg\\r?\\n(.+)\\r\\n", Pattern.DOTALL);
         loginPattern = Pattern.compile("^login\\r?\\n(.+)\\r\\n", Pattern.DOTALL);
-        
+        //TODO: create regexes for these patterns
+        connectPattern = Pattern.compile("^connect\\r?\\n",Pattern.DOTALL);
+        pollPattern = Pattern.compile("^poll\\r?\\n(info|users|room|)",Pattern.DOTALL);
+        packagePattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
+        acceptPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
+        infoPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
+        replicaConnectPattern = Pattern.compile("^replica connect\\r?\\n",Pattern.DOTALL);
     }
 
     public Message ()
@@ -101,6 +119,12 @@ public class Message
                 || isChatRoomID(messageString)
                 || isMsg(messageString)
                 || isLogin(messageString)
+                || isConnect(messageString)
+                || isPoll(messageString)
+                || isPackage(messageString)
+                || isAccept(messageString)
+                || isInfo(messageString)
+                || isReplicaConnect(messageString)
                 );
         //use regex for now
     }
@@ -298,6 +322,36 @@ public class Message
     public static boolean isLogin(String message)
     {
         Matcher m = loginPattern.matcher(message);
+        return m.find();
+    }
+    public static boolean isConnect(String message)
+    {
+        Matcher m = errorPattern.matcher(message);
+        return m.find();
+    }   
+    public static boolean isPoll(String message)
+    {
+        Matcher m = errorPattern.matcher(message);
+        return m.find();
+    }
+    public static boolean isPackage(String message)
+    {
+        Matcher m = errorPattern.matcher(message);
+        return m.find();
+    }
+    public static boolean isAccept(String message)
+    {
+        Matcher m = errorPattern.matcher(message);
+        return m.find();
+    }
+    public static boolean isInfo(String message)
+    {
+        Matcher m = errorPattern.matcher(message);
+        return m.find();
+    }
+    public static boolean isReplicaConnect(String message)
+    {
+        Matcher m = errorPattern.matcher(message);
         return m.find();
     }
     public int getMessageType ()

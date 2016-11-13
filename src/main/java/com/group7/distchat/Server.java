@@ -91,15 +91,18 @@ public class Server extends Thread{
 
             //open serverSocketChannel and bind to a port
             serverSocket = ServerSocketChannel.open();
-            InetSocketAddress serverAddress = new InetSocketAddress("127.0.0.1", port);
-            serverSocket.bind(serverAddress);
-
+            
             //make the socketChannel  non-blocking
             serverSocket.configureBlocking(false);
+            InetSocketAddress serverAddress = new InetSocketAddress(port);
+            
+            serverSocket.socket().bind(serverAddress);
+
 
             //register socketChannel with the selector
             serverSocket.register(sockSelector,
-                                         serverSocket.validOps(),
+                                        SelectionKey.OP_ACCEPT, 
+                                        //serverSocket.validOps(),
                                          null //no attachments
                                         );
 
@@ -121,7 +124,7 @@ public class Server extends Thread{
                     SelectionKey key = readyIter.next();
 
                     //accept the new connection, make it non-blocking and register it with the selector
-                    if (key.isAcceptable())
+                    if (key.isAcceptable() && key.isValid())
                     {
                         SocketChannel clientSocket = serverSocket.accept();
                         clientSocket.configureBlocking(false);
@@ -139,7 +142,7 @@ public class Server extends Thread{
                     }//key.isacceptable()
 
                     //socket is ready to be read
-                    else if (key.isReadable())
+                    else if (key.isReadable() && key.isValid())
                     {
                         SocketChannel clientSocket = (SocketChannel) key.channel();
 
@@ -147,44 +150,56 @@ public class Server extends Thread{
                         int id = (int) key.attachment();
                         ByteBuffer buff = recieveBuffers.get(id);
 
+                        
+                        int bytesRecv = 0;
                         //read
-                        int bytesRecv = clientSocket.read(buff);
-
-                        //connection closed, cancel the key, remove the <id,ByteBuffer> pair from our byteBuffer dict
-                        if (bytesRecv < 0)
+                        try
                         {
-                            System.out.println("Connection Closed " + clientSocket.socket());
-                            key.cancel();
-                            recieveBuffers.remove(id);
-                        }
-                        else
-                        {
-                            if (Message.isMessage(buff))
+                            bytesRecv = clientSocket.read(buff);
+                            //connection closed, cancel the key, remove the <id,ByteBuffer> pair from our byteBuffer dict
+                            if (bytesRecv < 0)
                             {
-                                Message message = Message.getMessage (buff);
-                                message.id = id;
-
-                                synchronized(inQueue){
-                                    inQueue.addLast(message); //put recieved message on the queue
-                                    inQueue.notify(); //tell application we have a message
-                                    serverLog.log(Level.INFO, "Message Queued for application and notify()");
-                                }
-                                
-                                key.interestOps(SelectionKey.OP_WRITE); //we're only interested in writing to the socket now
-                                //addSocketBuffer(id); //TODO: Assumes that we throw out the rest of the buffer
+                                key.cancel();
+                                recieveBuffers.remove(id);
+                                serverLog.log(Level.INFO, "Client Disconnected "+ clientSocket);
                             }
                             else
                             {
-                                //continue reading
-                                //log that we recv. bytes
-                                if(bytesRecv > 0)
-                                    serverLog.log(Level.INFO, "Partial Message (" + bytesRecv + ") bytes received");
+                                if (Message.isMessage(buff))
+                                {
+                                    Message message = Message.getMessage (buff);
+                                    message.id = id;
+
+                                    synchronized(inQueue){
+                                        inQueue.addLast(message); //put recieved message on the queue
+                                        inQueue.notify(); //tell application we have a message
+                                        serverLog.log(Level.INFO, "Message Queued for application and notify()");
+                                    }
+                                    
+                                    key.interestOps(SelectionKey.OP_WRITE); //we're only interested in writing to the socket now
+                                    //addSocketBuffer(id); //TODO: Assumes that we throw out the rest of the buffer
+                                }
+                                else
+                                {
+                                    //continue reading
+                                    //log that we recv. bytes
+                                    if(bytesRecv > 0)
+                                        serverLog.log(Level.INFO, "Partial Message (" + bytesRecv + ") bytes received");
+                                }
+
                             }
 
+                        } 
+                        catch (IOException e){
+                            clientSocket.close();
+                            key.cancel();
+                            recieveBuffers.remove(id);
+                            serverLog.log(Level.INFO, "Client Disconnected "+ clientSocket);
                         }
+
                     }//key.isReadable()
 
-                    else if (key.isWritable())
+                    else if (key.isWritable() && key.isValid())
                     {
                         SocketChannel clientSocket = (SocketChannel) key.channel();
 
