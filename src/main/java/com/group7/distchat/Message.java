@@ -324,6 +324,11 @@ public class Message
         Matcher m = loginPattern.matcher(message);
         return m.find();
     }
+    public static String loginGetUsername (String message) {
+        Matcher m = loginPattern.matcher(message);
+        m.find();
+        return m.group(1);
+    }
     public static boolean isConnect(String message)
     {
         Matcher m = errorPattern.matcher(message);
