@@ -25,6 +25,12 @@ public class Message
     public static final int M_OPEN = 1002;
     public static final int M_ECHO = 1003;
     public static final int M_ERROR = 1004;
+    public static final int M_CONNECT = 1005;
+    public static final int M_POLL = 1006;
+    public static final int M_PACKAGE = 1007;
+    public static final int M_ACCEPT = 1008;
+    public static final int M_INFO = 1009;
+    public static final int M_REPLICA_CONNECT = 1010;
    
     //static patterns matching the messages
     public static Pattern msgSendPattern;
@@ -32,6 +38,12 @@ public class Message
     public static Pattern openPattern;
     public static Pattern echoPattern;
     public static Pattern errorPattern;
+    public static Pattern connectPattern;
+    public static Pattern pollPattern;
+    public static Pattern packagePattern;
+    public static Pattern acceptPattern;
+    public static Pattern infoPattern;
+    public static Pattern replicaConnectPattern;
 
     public int id = M_INVALID;
     //message type
@@ -45,7 +57,14 @@ public class Message
         registerPattern = Pattern.compile("^register\\r?\\n([\\w-]+)\\r?\\n",Pattern.DOTALL);
         openPattern = Pattern.compile("^open\\r?\\n([\\d]+)\\r?\\n",Pattern.DOTALL);
         echoPattern = Pattern.compile("^echo\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
-        errorPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
+        errorPattern = Pattern.compile("^error\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
+        //TODO: create regexes for these patterns
+        connectPattern = Pattern.compile("^connect\\r?\\n",Pattern.DOTALL);
+        pollPattern = Pattern.compile("^poll\\r?\\n(info|users|room|)",Pattern.DOTALL);
+        packagePattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
+        acceptPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
+        infoPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
+        replicaConnectPattern = Pattern.compile("^replica connect\\r?\\n",Pattern.DOTALL);
     }
 
     public Message ()
@@ -75,7 +94,13 @@ public class Message
                 || isRegister(messageString)
                 || isOpen(messageString)
                 || isEcho(messageString)
-                //|| isError(messageString)
+                || isError(messageString)
+                || isConnect(messageString)
+                || isPoll(messageString)
+                || isPackage(messageString)
+                || isAccept(messageString)
+                || isInfo(messageString)
+                || isReplicaConnect(messageString)
                 );
         //use regex for now
     }
@@ -196,6 +221,41 @@ public class Message
     public static boolean isEcho(String message)
     {
         Matcher m = echoPattern.matcher(message);
+        return m.find();
+    }
+    public static boolean isError(String message)
+    {
+        Matcher m = errorPattern.matcher(message);
+        return m.find();
+    }
+    public static boolean isConnect(String message)
+    {
+        Matcher m = errorPattern.matcher(message);
+        return m.find();
+    }   
+    public static boolean isPoll(String message)
+    {
+        Matcher m = errorPattern.matcher(message);
+        return m.find();
+    }
+    public static boolean isPackage(String message)
+    {
+        Matcher m = errorPattern.matcher(message);
+        return m.find();
+    }
+    public static boolean isAccept(String message)
+    {
+        Matcher m = errorPattern.matcher(message);
+        return m.find();
+    }
+    public static boolean isInfo(String message)
+    {
+        Matcher m = errorPattern.matcher(message);
+        return m.find();
+    }
+    public static boolean isReplicaConnect(String message)
+    {
+        Matcher m = errorPattern.matcher(message);
         return m.find();
     }
     public int getMessageType ()
