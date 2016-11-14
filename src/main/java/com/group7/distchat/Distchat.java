@@ -101,11 +101,12 @@ public class Distchat extends Thread
                     }
                     //get a response
                     Message response = getResponse(request);
-
+                    
                     synchronized (outQueue) {
                         outQueue.addLast(response);
                         outQueue.notify();
                     }
+                    appLog.log(Level.INFO, "Application queued response message\n" + "********************\n" + response.toString() + "\n********************\n" );
                 }
             }
         }
@@ -144,22 +145,20 @@ public class Distchat extends Thread
                 {
                     messageString = "ok\nOpen " + roomName + "Successful\n";
                     Message response = Message.getMessage(messageString);
-                System.out.println("WE MADE IT");
+                    System.out.println("WE MADE IT");
                     return response;
                 }
                 else
                 {
                     messageString = "error\nRoom Doesn't Exist\n";
                     Message response = Message.getMessage(messageString);
-                System.out.println("BAD");
+                    System.out.println("BAD");
                     return response;
                 }
             }
-            //if type echo
-            //if type info
             //if type get message
             // Quit/Logout Response
-            else if (Message.isQuit(message.toString()))
+            if (Message.isQuit(message.toString()))
             {
             	if (userList.containsKey(message.id))
             	{

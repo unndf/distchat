@@ -25,7 +25,7 @@ public class Client {
         registerCommandPattern = Pattern.compile("!register\\s+([\\w-]+)");
         leaveCommandPattern = Pattern.compile("!leave\\s+([\\w-]+)");
     }
-
+    public static final int MAX_MESSAGE_SIZE = 8196;
     //Art is VERY important....
     public static final String INIT_MESSAGE =
  "\n\n\n\n"+
@@ -41,7 +41,6 @@ public class Client {
 	public static void main(String[] args) throws IOException //lazt fix
     {
 	    Socket socket = null;
-        OutputStream socketStream = null;
         String host = "";
         int port = -1;
 
@@ -49,7 +48,8 @@ public class Client {
 
         //reader for user input stdin
         BufferedReader console = new BufferedReader( new InputStreamReader(System.in));
-		
+	    BufferedReader receiveFromServer = null;
+        BufferedWriter sendToServer = null;
         //begin the inital connect to a server
         System.out.println("Please connect to a Server (ipaddress:port)");
         String ip = "";
@@ -67,7 +67,8 @@ public class Client {
         try 
         {
 			socket = new Socket(host, port);
-            socketStream = socket.getOutputStream();
+            sendToServer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            receiveFromServer = new BufferedReader(new InputStreamReader(socket.getInputStream()));	
         }
         catch (IOException e) //Something wrong with IO
         {
@@ -93,8 +94,15 @@ public class Client {
                 m.find();
                 String roomName = m.group(1);
                 String messageString = "open\n" + roomName +"\n";
-                socketStream.write(messageString.getBytes());
-                socketStream.flush();
+                sendToServer.write(messageString.toCharArray(),0,messageString.length());
+                sendToServer.flush();
+
+                char[] buff = new char[MAX_MESSAGE_SIZE];
+                receiveFromServer.readLine();
+                //receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
+                System.out.println(socket.getInputStream().available());
+                String response = new String(buff);
+                System.out.println(response);
             }
             else if (isConnectCommand(input))
             {
