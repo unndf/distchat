@@ -38,6 +38,8 @@ public class Message
     public static final int M_INFO = 1015;
     public static final int M_REPLICA_CONNECT = 1016;
     public static final int M_WELCOME = 1017;
+    public static final int M_EXIT = 1018;
+    public static final int M_LOGOUT = 1019;
    
     //static patterns matching the messages
     public static Pattern msgSendPattern;
@@ -58,6 +60,8 @@ public class Message
     public static Pattern infoPattern;
     public static Pattern replicaConnectPattern;
     public static Pattern welcomePattern;
+    public static Pattern exitPattern;				//Exit is for exiting a chat room, so a user can join a different one. 
+    public static Pattern logoutPattern;				//Logout is for leaving the chat room program
 
     public int id = M_INVALID;
     //message type
@@ -85,6 +89,8 @@ public class Message
         infoPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
         replicaConnectPattern = Pattern.compile("^replica connect\\r?\\n",Pattern.DOTALL);
         welcomePattern = Pattern.compile("^Welcome, \\r?\\n(.+)\\r\\n", Pattern.DOTALL);
+        exitPattern = Pattern.compile("^exit\\r\\n", Pattern.DOTALL);
+        logoutPattern = Pattern.compile("^logout\\r\\n", Pattern.DOTALL);
     }
 
     public Message ()
@@ -128,6 +134,8 @@ public class Message
                 || isInfo(messageString)
                 || isReplicaConnect(messageString)
                 || isWelcome(messageString)
+                || isExit(messageString)
+                || isLogout(messageString)
                 );
         //use regex for now
     }
@@ -261,6 +269,16 @@ public class Message
                 m.find();
                 retMessageString = m.group(0);
             }
+            else if (isExit(messageString)){
+                Matcher m = exitPattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
+            else if (isLogout(messageString)){
+                Matcher m = logoutPattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
             retMessage = new Message(retMessageString);
             int byteLen = 0;
             try{
@@ -299,6 +317,8 @@ public class Message
         else if (isInfo(message))	 	 return M_INFO;
         else if (isReplicaConnect(message))  	 return M_REPLICA_CONNECT;
         else if (isWelcome(message))  	 return M_WELCOME;
+        else if (isExit(message))  	 	 return M_EXIT;
+        else if (isLogout(message))  	 return M_LOGOUT;
         else                             return M_INVALID; //not a valid message
     }
     /**
@@ -407,6 +427,16 @@ public class Message
     public static boolean isWelcome(String message)
     {
         Matcher m = welcomePattern.matcher(message);
+        return m.find();
+    }
+    public static boolean isExit(String message)
+    {
+        Matcher m = exitPattern.matcher(message);
+        return m.find();
+    }
+    public static boolean isLogout(String message)
+    {
+        Matcher m = logoutPattern.matcher(message);
         return m.find();
     }
     public int getMessageType ()
