@@ -123,6 +123,12 @@ public class Distchat extends Thread
                 ByteBuffer buff = ByteBuffer.wrap(responseString.getBytes());
                 return Message.getMessage(buff);
             }
+            //if type open
+            if (Message.isOpen(message.toString()))
+            {
+                String roomName = Message.openGetRoomName(message.toString());
+                System.out.println("WE MADE IT");
+            }
             //if type echo
             return message; //echo all messages back
             //if type open

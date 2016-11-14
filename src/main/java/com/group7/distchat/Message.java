@@ -67,7 +67,7 @@ public class Message
     {
         msgSendPattern = Pattern.compile("^message-send\\r?\\n([0-9]+)\\r?\\n([0-9]+)\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
         registerPattern = Pattern.compile("^register\\r?\\n([\\w-]+)\\r?\\n",Pattern.DOTALL);
-        openPattern = Pattern.compile("^open\\r?\\n([\\d]+)\\r?\\n",Pattern.DOTALL);
+        openPattern = Pattern.compile("^open\\r?\\n([\\w-]+)\\r?\\n",Pattern.DOTALL);
         echoPattern = Pattern.compile("^echo\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
         errorPattern = Pattern.compile("^error\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
         quitPattern = Pattern.compile("^quit\\r?\\n\\r?\\n", Pattern.DOTALL);
@@ -278,7 +278,13 @@ public class Message
     public static boolean isOpen (String message)
     {
         Matcher m = openPattern.matcher(message);
-        return m.matches();
+        return m.find();
+    }
+    public static String openGetRoomName (String message)
+    {
+        Matcher m = openPattern.matcher(message);
+        m.find();
+        return m.group(1);
     }
     /** Method to determine if the message is of type echo
      * @param String message

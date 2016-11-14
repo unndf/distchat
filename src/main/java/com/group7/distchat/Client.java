@@ -38,18 +38,20 @@ public class Client {
  "| $$$$$$$//$$$$$|  $$$$$$/  | $$ |  $$$$$$| $$  | $| $$  | $$  | $$\n"+   
  "|_______/|______/\\______/   |__/  \\______/|__/  |__|__/  |__/  |__/\n" +
  "\nType \"help\" for a list of commands\nFor more info on the commands use \"help <command>\"\n\n";
-                                                                    
-	private static String host = "";
-	static int port = -1;
 	public static void main(String[] args) throws IOException //lazt fix
     {
 	    Socket socket = null;
+        OutputStream socketStream = null;
+        String host = "";
+        int port = -1;
 
         System.out.println(INIT_MESSAGE);
 
         //reader for user input stdin
         BufferedReader console = new BufferedReader( new InputStreamReader(System.in));
-		System.out.println("Please connect to a Server (ipaddress:port)");
+		
+        //begin the inital connect to a server
+        System.out.println("Please connect to a Server (ipaddress:port)");
         String ip = "";
         ip = console.readLine();
         Matcher matcher = ipWithPortPattern.matcher(ip);
@@ -65,6 +67,7 @@ public class Client {
         try 
         {
 			socket = new Socket(host, port);
+            socketStream = socket.getOutputStream();
         }
         catch (IOException e) //Something wrong with IO
         {
@@ -82,9 +85,16 @@ public class Client {
         while(true)
         {
             String input = console.readLine(); //get input from user
+            try
+            {
             if (isOpenCommand(input))
             {
-                System.out.println("wow nice open");
+                Matcher m = openCommandPattern.matcher(input);
+                m.find();
+                String roomName = m.group(1);
+                String messageString = "open\n" + roomName +"\n";
+                socketStream.write(messageString.getBytes());
+                socketStream.flush();
             }
             else if (isConnectCommand(input))
             {
@@ -97,6 +107,11 @@ public class Client {
             else
             {
                 System.out.println("Please enter a valid command");
+            }
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace(); //TODO: We should actually handle it....
             }
         }
 	} // main
