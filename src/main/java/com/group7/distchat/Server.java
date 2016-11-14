@@ -176,7 +176,7 @@ public class Server extends Thread{
                                         serverLog.log(Level.INFO, "Message Queued for application and notify()");
                                     }
                                     
-                                    key.interestOps(SelectionKey.OP_WRITE); //we're only interested in writing to the socket now
+                                    key.interestOps(SelectionKey.OP_WRITE | SelectionKey.OP_READ); //we're only interested in writing to the socket now
                                     //addSocketBuffer(id); //TODO: Assumes that we throw out the rest of the buffer
                                 }
                                 else

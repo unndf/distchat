@@ -37,7 +37,8 @@ public class Message
     public static final int M_ACCEPT = 1014;
     public static final int M_INFO = 1015;
     public static final int M_REPLICA_CONNECT = 1016;
-   
+    public static final int M_OK = 1017;
+
     //static patterns matching the messages
     public static Pattern msgSendPattern;
     public static Pattern registerPattern;
@@ -56,6 +57,7 @@ public class Message
     public static Pattern acceptPattern;
     public static Pattern infoPattern;
     public static Pattern replicaConnectPattern;
+    public static Pattern okPattern;
 
     public int id = M_INVALID;
     //message type
@@ -83,6 +85,7 @@ public class Message
         acceptPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
         infoPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
         replicaConnectPattern = Pattern.compile("^replica connect\\r?\\n",Pattern.DOTALL);
+        okPattern = Pattern.compile("^ok\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
     }
 
     public Message ()
@@ -125,6 +128,7 @@ public class Message
                 || isAccept(messageString)
                 || isInfo(messageString)
                 || isReplicaConnect(messageString)
+                || isOk(messageString)
                 );
         //use regex for now
     }
@@ -139,8 +143,6 @@ public class Message
     {
         //duplicate
         ByteBuffer buffCopy = ByteBuffer.allocate(buff.capacity());
-        //buffCopy.flip();
-     
 
         //Not the cleaniest way to do things
         //requires at least n calls to isMessage for a message of n length
@@ -218,6 +220,11 @@ public class Message
                 m.find();
                 retMessageString = m.group(0);
             }
+            else if (isOk(messageString)){
+                Matcher m = okPattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
             retMessage = new Message(retMessageString);
             int byteLen = 0;
             try{
@@ -230,6 +237,11 @@ public class Message
             buff.clear();
         }   
         return retMessage;
+    }
+    public static Message getMessage (String input)
+    {
+        ByteBuffer buff = ByteBuffer.wrap(input.getBytes());
+        return getMessage(buff);
     }
     /**
      * Gets the message type as defined by our constants
@@ -249,6 +261,7 @@ public class Message
         else if (isChatRoomID(message))  return M_CHATROOM_ID;
         else if (isMsg(message))  		 return M_MSG;
         else if (isLogin(message))  	 return M_LOGIN;
+        else if (isOk(message))          return M_OK;
         else                             return M_INVALID; //not a valid message
     }
     /**
@@ -332,6 +345,17 @@ public class Message
     }
     public static String loginGetUsername (String message) {
         Matcher m = loginPattern.matcher(message);
+        m.find();
+        return m.group(1);
+    }
+    public static boolean isOk (String message)
+    {
+        Matcher m = okPattern.matcher(message);
+        return m.find();
+    }
+    public static String okGetMessage (String message)
+    {
+        Matcher m  = okPattern.matcher(message);
         m.find();
         return m.group(1);
     }

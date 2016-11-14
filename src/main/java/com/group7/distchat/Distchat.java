@@ -7,6 +7,7 @@ import java.util.logging.SimpleFormatter;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.io.*;
 import java.nio.ByteBuffer;
 
@@ -14,7 +15,7 @@ public class Distchat extends Thread
 {
     private LinkedList<Message> inQueue  = new LinkedList<Message>();
     private LinkedList<Message> outQueue = new LinkedList<Message>();
-    private Map<Integer,String> roomList = new HashMap<Integer,String>();
+    private ArrayList<String> roomList = new ArrayList<String>();
     private Map<Integer,String> userList = new HashMap<Integer,String>();
     private Logger appLog = Logger.getLogger("com.group7.distchat.Distchat");
     private Server server = null;
@@ -47,10 +48,10 @@ public class Distchat extends Thread
     public void run ()
     {
         //Temporary TODO: Let users add the rooms (somehow....)
-        roomList.put(0,"Some room name");
-        roomList.put(1,"Another room");
-        roomList.put(2,"Demo room");
-        roomList.put(3,"Best room");
+        roomList.add("Some-room-name");
+        roomList.add("Another-room");
+        roomList.add("Demoroom");
+        roomList.add("Bestroom");
 
         server = new Server(port,inQueue, outQueue);
         //start the server thread
@@ -127,7 +128,22 @@ public class Distchat extends Thread
             if (Message.isOpen(message.toString()))
             {
                 String roomName = Message.openGetRoomName(message.toString());
+                String messageString = "";
+                //The room the client is attempting to open exists
+                if (roomList.contains(roomName))
+                {
+                    messageString = "ok\nOpen " + roomName + "Successful\n";
+                    Message response = Message.getMessage(messageString);
                 System.out.println("WE MADE IT");
+                    return response;
+                }
+                else
+                {
+                    messageString = "error\nRoom Doesn't Exist\n";
+                    Message response = Message.getMessage(messageString);
+                System.out.println("BAD");
+                    return response;
+                }
             }
             //if type echo
             return message; //echo all messages back
