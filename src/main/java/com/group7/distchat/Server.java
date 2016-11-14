@@ -210,7 +210,8 @@ public class Server extends Thread{
                         if(sendBuffers.containsKey(id)){
                             ByteBuffer buff = sendBuffers.get(id); //get the buffer for the socket we're sending to
 
-                            clientSocket.write(buff);
+                            int written = clientSocket.write(buff);
+                            serverLog.log(Level.INFO, written + " bytes written to " + clientSocket);
 
                             //done writing, continue reading
                             if (!buff.hasRemaining()){
@@ -230,6 +231,8 @@ public class Server extends Thread{
     //TODO: This should be implemented as a stack and calls pop from the stack. This is to prevent the int wrap-around
     private int getSocketId ()
     {
+        if (this.currentSocketId == -1) this.currentSocketId = 0;
+
         return ++(this.currentSocketId);
     }
     private void addSocketBuffer (int id)
@@ -261,7 +264,7 @@ public class Server extends Thread{
                 try
                 {
                     synchronized(outQueue){
-                        outQueue.wait(); //wait for messages to send
+                        outQueue.wait(1000); //wait for messages to send
                     }
                 } catch (InterruptedException e){
                     e.printStackTrace();//do nothing
@@ -284,10 +287,12 @@ public class Server extends Thread{
                         synchronized(outQueue){
                             outQueue.addLast(response); //put it back .....
                         }
+                        serverLog.log(Level.INFO, "socket with id " + id + " Already Writing. Try again later");
                     }
                     else{
                         sendBuffer = ByteBuffer.wrap(responseBytes);
                         sendBuffers.put(id,sendBuffer);
+                        serverLog.log(Level.INFO, "socket with id " + id + " ready to write");
                     }
                 }
             }

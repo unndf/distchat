@@ -79,7 +79,7 @@ public class Message
         userIDPattern = Pattern.compile("^userID\\r?\\n([0-9]+)\\r\\n", Pattern.DOTALL);
         chatRoomIDPattern = Pattern.compile("^chatRoomID\\r?\\n([0-9]+)\\r\\n", Pattern.DOTALL);
         msgPattern = Pattern.compile("^msg\\r?\\n(.+)\\r\\n", Pattern.DOTALL);
-        loginPattern = Pattern.compile("^login\\r?\\n(.+)\\r\\n", Pattern.DOTALL);
+        loginPattern = Pattern.compile("^login\\r?\\n([\\w-]+)\\r?\\n", Pattern.DOTALL);
         connectPattern = Pattern.compile("^connect\\r?\\n",Pattern.DOTALL);
         pollPattern = Pattern.compile("^poll\\r?\\n(info|users|room|)",Pattern.DOTALL);
         packagePattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);

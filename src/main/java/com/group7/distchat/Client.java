@@ -17,6 +17,7 @@ public class Client {
     public static Pattern registerCommandPattern;
     public static Pattern connectCommandPattern;
     public static Pattern leaveCommandPattern;
+    public static Pattern loginCommandPattern;
     static 
     {
         ipWithPortPattern = Pattern.compile("(\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d):(\\d?\\d?\\d?\\d?\\d)"); //NOTE: ONLY IPV4 IS SUPPORTED
@@ -24,6 +25,7 @@ public class Client {
         connectCommandPattern = Pattern.compile("!connect\\s+(\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d):(\\d?\\d?\\d?\\d)");
         registerCommandPattern = Pattern.compile("!register\\s+([\\w-]+)");
         leaveCommandPattern = Pattern.compile("!leave\\s+([\\w-]+)");
+        loginCommandPattern = Pattern.compile("!login\\s+([\\w-]+)");
     }
     public static final int MAX_MESSAGE_SIZE = 8196;
     //Art is VERY important....
@@ -42,6 +44,8 @@ public class Client {
     {
 	    Socket socket = null;
         String host = "";
+        String currentRoom = "";
+        String username = "";
         int port = -1;
 
         System.out.println(INIT_MESSAGE);
@@ -98,11 +102,16 @@ public class Client {
                 sendToServer.flush();
 
                 char[] buff = new char[MAX_MESSAGE_SIZE];
-                receiveFromServer.readLine();
-                //receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
-                System.out.println(socket.getInputStream().available());
+                receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
                 String response = new String(buff);
-                System.out.println(response);
+                if (Message.isOk(response))
+                {
+                    currentRoom = roomName;
+                }
+                else
+                {
+                    System.out.println("Room not found");
+                }
             }
             else if (isConnectCommand(input))
             {
@@ -111,6 +120,29 @@ public class Client {
             else if (isRegisterCommand(input))
             {
                 System.out.println("wow nice register");
+            }
+            else if (isLoginCommand(input))
+            {
+                Matcher m = loginCommandPattern.matcher(input);
+                m.find();
+                String name = m.group(1);
+                String messageString = "login\n"+name+"\n";
+                sendToServer.write(messageString.toCharArray(),0,messageString.length());
+                sendToServer.flush();
+
+                char[] buff = new char[MAX_MESSAGE_SIZE];
+                receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
+                String response = new String(buff);
+
+                if (Message.isOk(response))
+                {
+                    System.out.println("Login Success");
+                    username = name;
+                }
+                else 
+                {
+                    System.out.println("Login unsuccessful");
+                }
             }
             else
             {
@@ -136,6 +168,11 @@ public class Client {
     public static boolean isRegisterCommand (String command)
     {
         Matcher m = registerCommandPattern.matcher(command);
+        return m.find();
+    }
+    public static boolean isLoginCommand (String command)
+    {
+        Matcher m = loginCommandPattern.matcher(command);
         return m.find();
     }
     public class NetworkReader extends Thread

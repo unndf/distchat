@@ -17,6 +17,7 @@ public class Distchat extends Thread
     private LinkedList<Message> outQueue = new LinkedList<Message>();
     private ArrayList<String> roomList = new ArrayList<String>();
     private Map<Integer,String> userList = new HashMap<Integer,String>();
+    private Map<Integer,String> userOpenList = new HashMap<Integer,String>(); //Map of clients to rooms open
     private Logger appLog = Logger.getLogger("com.group7.distchat.Distchat");
     private Server server = null;
     private int port = -1;
@@ -48,8 +49,11 @@ public class Distchat extends Thread
     public void run ()
     {
         //Temporary TODO: Let users add the rooms (somehow....)
-        roomList.add("Some-room-name");
-        roomList.add("Another-room");
+        roomList.add("roomA");
+        roomList.add("roomB");
+        roomList.add("roomC");
+        roomList.add("room-with-dashes");
+        roomList.add("roomB");
         roomList.add("Demoroom");
         roomList.add("Bestroom");
 
@@ -101,7 +105,7 @@ public class Distchat extends Thread
                     }
                     //get a response
                     Message response = getResponse(request);
-                    
+                    response.id = request.id; //just in case...
                     synchronized (outQueue) {
                         outQueue.addLast(response);
                         outQueue.notify();
@@ -131,7 +135,7 @@ public class Distchat extends Thread
                 String username = Message.loginGetUsername(message.toString());
                 userList.put(message.id, username);
                 Message response = null;
-                String responseString = "msg Welcome, " + username + "\n";
+                String responseString = "ok\nmsg Welcome, " + username + "\n";
                 ByteBuffer buff = ByteBuffer.wrap(responseString.getBytes());
                 return Message.getMessage(buff);
             }
@@ -143,20 +147,21 @@ public class Distchat extends Thread
                 //The room the client is attempting to open exists
                 if (roomList.contains(roomName))
                 {
-                    messageString = "ok\nOpen " + roomName + "Successful\n";
+                    messageString = "ok\nOpen " + roomName + " Successful\n";
                     Message response = Message.getMessage(messageString);
-                    System.out.println("WE MADE IT");
+                    response.id = message.id;
+
+                    userOpenList.put(response.id,roomName);
                     return response;
                 }
                 else
                 {
                     messageString = "error\nRoom Doesn't Exist\n";
                     Message response = Message.getMessage(messageString);
-                    System.out.println("BAD");
+                    response.id = message.id;
                     return response;
                 }
             }
-            //if type get message
             // Quit/Logout Response
             if (Message.isQuit(message.toString()))
             {
