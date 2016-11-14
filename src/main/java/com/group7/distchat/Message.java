@@ -25,12 +25,18 @@ public class Message
     public static final int M_OPEN = 1002;
     public static final int M_ECHO = 1003;
     public static final int M_ERROR = 1004;
-    public static final int M_CONNECT = 1005;
-    public static final int M_POLL = 1006;
-    public static final int M_PACKAGE = 1007;
-    public static final int M_ACCEPT = 1008;
-    public static final int M_INFO = 1009;
-    public static final int M_REPLICA_CONNECT = 1010;
+    public static final int M_QUIT = 1005;
+    public static final int M_MSG_ID = 1006;
+    public static final int M_USER_ID = 1007;
+    public static final int M_CHATROOM_ID = 1008;
+    public static final int M_MSG = 1009;
+    public static final int M_LOGIN = 1010;
+    public static final int M_CONNECT = 1011;
+    public static final int M_POLL = 1012;
+    public static final int M_PACKAGE = 1013;
+    public static final int M_ACCEPT = 1014;
+    public static final int M_INFO = 1015;
+    public static final int M_REPLICA_CONNECT = 1016;
    
     //static patterns matching the messages
     public static Pattern msgSendPattern;
@@ -38,6 +44,12 @@ public class Message
     public static Pattern openPattern;
     public static Pattern echoPattern;
     public static Pattern errorPattern;
+    public static Pattern quitPattern;
+    public static Pattern msgIDPattern;
+    public static Pattern userIDPattern;
+    public static Pattern chatRoomIDPattern;
+    public static Pattern msgPattern;
+    public static Pattern loginPattern;
     public static Pattern connectPattern;
     public static Pattern pollPattern;
     public static Pattern packagePattern;
@@ -58,6 +70,12 @@ public class Message
         openPattern = Pattern.compile("^open\\r?\\n([\\d]+)\\r?\\n",Pattern.DOTALL);
         echoPattern = Pattern.compile("^echo\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
         errorPattern = Pattern.compile("^error\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
+        quitPattern = Pattern.compile("^quit\\r?\\n\\r?\\n", Pattern.DOTALL);
+        msgIDPattern = Pattern.compile("^msgID\\r?\\n([0-9]+)\\r\\n", Pattern.DOTALL);
+        userIDPattern = Pattern.compile("^userID\\r?\\n([0-9]+)\\r\\n", Pattern.DOTALL);
+        chatRoomIDPattern = Pattern.compile("^chatRoomID\\r?\\n([0-9]+)\\r\\n", Pattern.DOTALL);
+        msgPattern = Pattern.compile("^msg\\r?\\n(.+)\\r\\n", Pattern.DOTALL);
+        loginPattern = Pattern.compile("^login\\r?\\n(.+)\\r\\n", Pattern.DOTALL);
         //TODO: create regexes for these patterns
         connectPattern = Pattern.compile("^connect\\r?\\n",Pattern.DOTALL);
         pollPattern = Pattern.compile("^poll\\r?\\n(info|users|room|)",Pattern.DOTALL);
@@ -95,6 +113,12 @@ public class Message
                 || isOpen(messageString)
                 || isEcho(messageString)
                 || isError(messageString)
+                || isQuit(messageString)
+                || isMsgID(messageString)
+                || isUserID(messageString)
+                || isChatRoomID(messageString)
+                || isMsg(messageString)
+                || isLogin(messageString)
                 || isConnect(messageString)
                 || isPoll(messageString)
                 || isPackage(messageString)
@@ -159,6 +183,41 @@ public class Message
                 m.find();
                 retMessageString = m.group(0);
             }
+            else if (isError(messageString)){
+                Matcher m = errorPattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
+            else if (isQuit(messageString)){
+                Matcher m = quitPattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
+            else if (isMsgID(messageString)){
+                Matcher m = msgIDPattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
+            else if (isUserID(messageString)){
+                Matcher m = userIDPattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
+            else if (isChatRoomID(messageString)){
+                Matcher m = chatRoomIDPattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
+            else if (isMsg(messageString)){
+                Matcher m = msgPattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
+            else if (isLogin(messageString)){
+                Matcher m = loginPattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
             retMessage = new Message(retMessageString);
             int byteLen = 0;
             try{
@@ -183,10 +242,17 @@ public class Message
         else if (isRegister(message))    return M_REGISTER;
         else if (isOpen(message))        return M_OPEN;
         else if (isEcho(message))        return M_ECHO;
+        else if (isError(message))       return M_ERROR;
+        else if (isQuit(message))      	 return M_QUIT;
+        else if (isMsgID(message))       return M_MSG_ID;
+        else if (isUserID(message))      return M_USER_ID;
+        else if (isChatRoomID(message))  return M_CHATROOM_ID;
+        else if (isMsg(message))  		 return M_MSG;
+        else if (isLogin(message))  	 return M_LOGIN;
         else                             return M_INVALID; //not a valid message
     }
     /**
-     * Method to determine if the Mesage is of type messageSend
+     * Method to determine if the Message is of type messageSend
      * @param String message
      * @return boolean
      */
@@ -227,6 +293,41 @@ public class Message
     {
         Matcher m = errorPattern.matcher(message);
         return m.find();
+    }
+    public static boolean isQuit(String message)
+    {
+        Matcher m = quitPattern.matcher(message);
+        return m.find();
+    }
+    public static boolean isMsgID(String message)
+    {
+        Matcher m = msgIDPattern.matcher(message);
+        return m.find();
+    }
+    public static boolean isUserID(String message)
+    {
+        Matcher m = userIDPattern.matcher(message);
+        return m.find();
+    }
+    public static boolean isChatRoomID(String message)
+    {
+        Matcher m = chatRoomIDPattern.matcher(message);
+        return m.find();
+    }
+    public static boolean isMsg(String message)
+    {
+        Matcher m = msgPattern.matcher(message);
+        return m.find();
+    }
+    public static boolean isLogin(String message)
+    {
+        Matcher m = loginPattern.matcher(message);
+        return m.find();
+    }
+    public static String loginGetUsername (String message) {
+        Matcher m = loginPattern.matcher(message);
+        m.find();
+        return m.group(1);
     }
     public static boolean isConnect(String message)
     {

@@ -8,12 +8,14 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.HashMap;
 import java.io.*;
+import java.nio.ByteBuffer;
 
 public class Distchat extends Thread
 {
     private LinkedList<Message> inQueue  = new LinkedList<Message>();
     private LinkedList<Message> outQueue = new LinkedList<Message>();
     private Map<Integer,String> roomList = new HashMap<Integer,String>();
+    private Map<Integer,String> userList = new HashMap<Integer,String>();
     private Logger appLog = Logger.getLogger("com.group7.distchat.Distchat");
     private Server server = null;
     private int port = -1;
@@ -108,6 +110,19 @@ public class Distchat extends Thread
         }
         public Message getResponse (Message message)
         {
+            //if type login
+            //  parse username from message
+            //  associate username with socket id
+            //  send ok
+            if (Message.isLogin(message.toString()))
+            {
+                String username = Message.loginGetUsername(message.toString());
+                userList.put(message.id, username);
+                Message response = null;
+                String responseString = "Welcome, " + username + "\n";
+                ByteBuffer buff = ByteBuffer.wrap(responseString.getBytes());
+                return Message.getMessage(buff);
+            }
             //if type echo
             return message; //echo all messages back
             //if type open
