@@ -37,6 +37,7 @@ public class Message
     public static final int M_ACCEPT = 1014;
     public static final int M_INFO = 1015;
     public static final int M_REPLICA_CONNECT = 1016;
+    public static final int M_WELCOME = 1017;
    
     //static patterns matching the messages
     public static Pattern msgSendPattern;
@@ -56,6 +57,7 @@ public class Message
     public static Pattern acceptPattern;
     public static Pattern infoPattern;
     public static Pattern replicaConnectPattern;
+    public static Pattern welcomePattern;
 
     public int id = M_INVALID;
     //message type
@@ -83,6 +85,7 @@ public class Message
         acceptPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
         infoPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
         replicaConnectPattern = Pattern.compile("^replica connect\\r?\\n",Pattern.DOTALL);
+        welcomePattern = Pattern.compile("^Welcome, \\r?\\n(.+)\\r\\n", Pattern.DOTALL);
     }
 
     public Message ()
@@ -125,6 +128,7 @@ public class Message
                 || isAccept(messageString)
                 || isInfo(messageString)
                 || isReplicaConnect(messageString)
+                || isWelcome(messageString)
                 );
         //use regex for now
     }
@@ -218,6 +222,16 @@ public class Message
                 m.find();
                 retMessageString = m.group(0);
             }
+            else if (isReplicaConnect(messageString)){
+                Matcher m = replicaConnectPattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
+            else if (isWelcome(messageString)){
+                Matcher m = welcomePattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
             retMessage = new Message(retMessageString);
             int byteLen = 0;
             try{
@@ -249,6 +263,8 @@ public class Message
         else if (isChatRoomID(message))  return M_CHATROOM_ID;
         else if (isMsg(message))  		 return M_MSG;
         else if (isLogin(message))  	 return M_LOGIN;
+        else if (isReplicaConnect(message))  	 return M_REPLICA_CONNECT;
+        else if (isWelcome(message))  	 return M_WELCOME;
         else                             return M_INVALID; //not a valid message
     }
     /**
@@ -351,7 +367,12 @@ public class Message
     }
     public static boolean isReplicaConnect(String message)
     {
-        Matcher m = errorPattern.matcher(message);
+        Matcher m = replicaConnectPattern.matcher(message);
+        return m.find();
+    }
+    public static boolean isWelcome(String message)
+    {
+        Matcher m = welcomePattern.matcher(message);
         return m.find();
     }
     public int getMessageType ()
