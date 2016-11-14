@@ -4,66 +4,142 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.*;
+import java.net.UnknownHostException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 public class Client {
-	static String host = "";
-	static int port = -1;
-	public static void main(String[] args) {
-		if (args.length != 2)
-			System.exit(1);
+    public static Pattern ipWithPortPattern;
+    public static Pattern openCommandPattern;
+    public static Pattern registerCommandPattern;
+    public static Pattern connectCommandPattern;
+    public static Pattern leaveCommandPattern;
+    static 
+    {
+        ipWithPortPattern = Pattern.compile("(\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d):(\\d?\\d?\\d?\\d?\\d)"); //NOTE: ONLY IPV4 IS SUPPORTED
+        openCommandPattern = Pattern.compile("!open\\s+([\\w-]+)");
+        connectCommandPattern = Pattern.compile("!connect\\s+(\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d):(\\d?\\d?\\d?\\d)");
+        registerCommandPattern = Pattern.compile("!register\\s+([\\w-]+)");
+        leaveCommandPattern = Pattern.compile("!leave\\s+([\\w-]+)");
+    }
 
-		host	= args[0];
-		port	= Integer.parseInt( args[1] );
-		String toSend		= null;
-		String incoming = "";
+    //Art is VERY important....
+    public static final String INIT_MESSAGE =
+ "\n\n\n\n"+
+ "/$$$$$$$ /$$$$$$ /$$$$$$ /$$$$$$$$/$$$$$$ /$$   /$$ /$$$$$$ /$$$$$$$$\n"+
+ "| $$__  $|_  $$_//$$__  $|__  $$__/$$__  $| $$  | $$/$$__  $|__  $$__/\n"+
+ "| $$  \\ $$ | $$ | $$  \\__/  | $$ | $$  \\__| $$  | $| $$  \\ $$  | $$\n"+   
+ "| $$  | $$ | $$ |  $$$$$$   | $$ | $$     | $$$$$$$| $$$$$$$$  | $$\n"+   
+ "| $$  | $$ | $$  \\____  $$  | $$ | $$     | $$__  $| $$__  $$  | $$\n"+   
+ "| $$  | $$ | $$  /$$  \\ $$  | $$ | $$    $| $$  | $| $$  | $$  | $$\n"+   
+ "| $$$$$$$//$$$$$|  $$$$$$/  | $$ |  $$$$$$| $$  | $| $$  | $$  | $$\n"+   
+ "|_______/|______/\\______/   |__/  \\______/|__/  |__|__/  |__/  |__/\n" +
+ "\nType \"help\" for a list of commands\nFor more info on the commands use \"help <command>\"\n\n";
+	public static void main(String[] args) throws IOException //lazt fix
+    {
+	    Socket socket = null;
+        OutputStream socketStream = null;
+        String host = "";
+        int port = -1;
+
+        System.out.println(INIT_MESSAGE);
+
+        //reader for user input stdin
+        BufferedReader console = new BufferedReader( new InputStreamReader(System.in));
 		
-		try {
-			Socket socket = new Socket(host, port);
-			if ( socket == null )		// catch NullPointerExceptions
-				return;
-
-			BufferedReader inFromUser = new BufferedReader( new InputStreamReader(System.in));
-			BufferedWriter sendToServer	= new BufferedWriter( new OutputStreamWriter( socket.getOutputStream() ) );
-			BufferedReader receiveFromServer = new BufferedReader( new InputStreamReader( socket.getInputStream() ) );
-
-			while(true){		
-				// Get keyboard input from user, to send to server
-				System.out.print("Input Message: ");
-				System.out.flush();
-				toSend = inFromUser.readLine();
-				
-				if (toSend.equals("quit"))		//Can change this later, just need a way to break out of loop
-					break;
-				
-				//sendToServer.write("echo\n" + toSend + "\n");
-				//sendToServer.write("echo\nhello\n");
-				socket.getOutputStream().write(("echo\n"+toSend+"\n").getBytes());
-                //sendToServer.write("echo\n" + toSend + "\n");
-				//sendToServer.flush();
-				
-				// Response back from server
-				incoming = receiveFromServer.readLine();
-				//System.out.println("Incoming message: " + incoming);	//This is where we check to see if the server
-																		// responds with a "message received"
-				if (incoming.equals("Error")){
-					
-				}else if (incoming.equals("Failure")){
-					
-				}else{
-					// If the message was good (no issues), then the response should be just a confirmation
-					System.out.println("Message was received by server");
-				}
-				} //While 
-			//socket.close();
-			} // try
-
-		catch (Exception e) {
-
-			System.err.println( "ERROR: Got exception: " + e.getMessage() );
-			e.printStackTrace();
-			}
+        //begin the inital connect to a server
+        System.out.println("Please connect to a Server (ipaddress:port)");
+        String ip = "";
+        ip = console.readLine();
+        Matcher matcher = ipWithPortPattern.matcher(ip);
+        while (!matcher.find())
+        {
+            System.out.println("please enter a valid host");
+            ip = console.readLine();
+            matcher = ipWithPortPattern.matcher(ip);
+        }
+        host = matcher.group(1);
+        port = Integer.parseInt(matcher.group(2));
+        System.out.println("Attempting Connect on " + host + " on port " + port + "...");
+        try 
+        {
+			socket = new Socket(host, port);
+            socketStream = socket.getOutputStream();
+        }
+        catch (IOException e) //Something wrong with IO
+        {
+            System.out.println("Failure");
+            e.printStackTrace(); //do nothing....
+        }
+        
+        System.out.println("Success!");
+        //While true
+        //get input from user
+        //validate input
+        //if valid message
+        //  queue for sending
+        //  wait for interrupts from workers
+        while(true)
+        {
+            String input = console.readLine(); //get input from user
+            try
+            {
+            if (isOpenCommand(input))
+            {
+                Matcher m = openCommandPattern.matcher(input);
+                m.find();
+                String roomName = m.group(1);
+                String messageString = "open\n" + roomName +"\n";
+                socketStream.write(messageString.getBytes());
+                socketStream.flush();
+            }
+            else if (isConnectCommand(input))
+            {
+                System.out.println("wow nice connect");
+            }
+            else if (isRegisterCommand(input))
+            {
+                System.out.println("wow nice register");
+            }
+            else
+            {
+                System.out.println("Please enter a valid command");
+            }
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace(); //TODO: We should actually handle it....
+            }
+        }
 	} // main
-
+    public static boolean isOpenCommand (String command)
+    {
+        Matcher m = openCommandPattern.matcher(command);
+        return m.find();
+    }
+    public static boolean isConnectCommand (String command)
+    {
+        Matcher m = connectCommandPattern.matcher(command);
+        return m.find();
+    }
+    public static boolean isRegisterCommand (String command)
+    {
+        Matcher m = registerCommandPattern.matcher(command);
+        return m.find();
+    }
+    public class NetworkReader extends Thread
+    {
+        public void run()
+        {
+        }
+    }
+    public class NetworkWriter extends Thread
+    {
+        public void run()
+        {
+        }
+    }
 }
