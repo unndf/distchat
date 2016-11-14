@@ -17,6 +17,7 @@ public class Client {
     public static Pattern registerCommandPattern;
     public static Pattern connectCommandPattern;
     public static Pattern leaveCommandPattern;
+    public static Pattern loginCommandPattern;
     static 
     {
         ipWithPortPattern = Pattern.compile("(\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d):(\\d?\\d?\\d?\\d?\\d)"); //NOTE: ONLY IPV4 IS SUPPORTED
@@ -24,8 +25,9 @@ public class Client {
         connectCommandPattern = Pattern.compile("!connect\\s+(\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d):(\\d?\\d?\\d?\\d)");
         registerCommandPattern = Pattern.compile("!register\\s+([\\w-]+)");
         leaveCommandPattern = Pattern.compile("!leave\\s+([\\w-]+)");
+        loginCommandPattern = Pattern.compile("!login\\s+([\\w-]+)");
     }
-
+    public static final int MAX_MESSAGE_SIZE = 8196;
     //Art is VERY important....
     public static final String INIT_MESSAGE =
  "\n\n\n\n"+
@@ -41,15 +43,17 @@ public class Client {
 	public static void main(String[] args) throws IOException //lazt fix
     {
 	    Socket socket = null;
-        OutputStream socketStream = null;
         String host = "";
+        String currentRoom = "";
+        String username = "";
         int port = -1;
 
         System.out.println(INIT_MESSAGE);
 
         //reader for user input stdin
         BufferedReader console = new BufferedReader( new InputStreamReader(System.in));
-		
+	    BufferedReader receiveFromServer = null;
+        BufferedWriter sendToServer = null;
         //begin the inital connect to a server
         System.out.println("Please connect to a Server (ipaddress:port)");
         String ip = "";
@@ -67,7 +71,8 @@ public class Client {
         try 
         {
 			socket = new Socket(host, port);
-            socketStream = socket.getOutputStream();
+            sendToServer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            receiveFromServer = new BufferedReader(new InputStreamReader(socket.getInputStream()));	
         }
         catch (IOException e) //Something wrong with IO
         {
@@ -93,8 +98,20 @@ public class Client {
                 m.find();
                 String roomName = m.group(1);
                 String messageString = "open\n" + roomName +"\n";
-                socketStream.write(messageString.getBytes());
-                socketStream.flush();
+                sendToServer.write(messageString.toCharArray(),0,messageString.length());
+                sendToServer.flush();
+
+                char[] buff = new char[MAX_MESSAGE_SIZE];
+                receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
+                String response = new String(buff);
+                if (Message.isOk(response))
+                {
+                    currentRoom = roomName;
+                }
+                else
+                {
+                    System.out.println("Room not found");
+                }
             }
             else if (isConnectCommand(input))
             {
@@ -103,6 +120,29 @@ public class Client {
             else if (isRegisterCommand(input))
             {
                 System.out.println("wow nice register");
+            }
+            else if (isLoginCommand(input))
+            {
+                Matcher m = loginCommandPattern.matcher(input);
+                m.find();
+                String name = m.group(1);
+                String messageString = "login\n"+name+"\n";
+                sendToServer.write(messageString.toCharArray(),0,messageString.length());
+                sendToServer.flush();
+
+                char[] buff = new char[MAX_MESSAGE_SIZE];
+                receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
+                String response = new String(buff);
+
+                if (Message.isOk(response))
+                {
+                    System.out.println("Login Success");
+                    username = name;
+                }
+                else 
+                {
+                    System.out.println("Login unsuccessful");
+                }
             }
             else
             {
@@ -128,6 +168,11 @@ public class Client {
     public static boolean isRegisterCommand (String command)
     {
         Matcher m = registerCommandPattern.matcher(command);
+        return m.find();
+    }
+    public static boolean isLoginCommand (String command)
+    {
+        Matcher m = loginCommandPattern.matcher(command);
         return m.find();
     }
     public class NetworkReader extends Thread
