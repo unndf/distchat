@@ -110,24 +110,69 @@ public class Distchat extends Thread
         }
         public Message getResponse (Message message)
         {
+        	/*
+        	 * We need reponses for:
+        	 * Login
+        	 * Quit
+        	 * echo
+        	 */
+        	
+        	// QUESTION: Do we need Message response = null?
+        	
             //if type login
             //  parse username from message
             //  associate username with socket id
             //  send ok
+        	// Login Response
             if (Message.isLogin(message.toString()))
             {
                 String username = Message.loginGetUsername(message.toString());
                 userList.put(message.id, username);
                 Message response = null;
-                String responseString = "Welcome, " + username + "\n";
+                String responseString = "msg Welcome, " + username + "\n";
                 ByteBuffer buff = ByteBuffer.wrap(responseString.getBytes());
                 return Message.getMessage(buff);
             }
-            //if type echo
-            return message; //echo all messages back
-            //if type open
-            //if type info
-            //if type get message
+            // Quit/Logout Response
+            else if (Message.isQuit(message.toString()))
+            {
+            	if (userList.containsKey(message.id))
+            	{
+            		String username = userList.get(message.id);
+                	userList.remove(message.id);
+                	Message response = null;
+                	String responseString = "Have a nice day, " + username + "\n";
+                	ByteBuffer buff = ByteBuffer.wrap(responseString.getBytes());
+                	return Message.getMessage(buff);
+            	}
+            	else
+            	{
+            		System.err.println("ERROR: User ID: " + message.id + " does not exist.");
+            		Message response = null;
+            		String responseString = "error user ID does not exist\n";
+            		ByteBuffer buff = ByteBuffer.wrap(responseString.getBytes());
+            		return Message.getMessage(buff);
+            	}
+            	
+            }
+            // Echo
+            else if (Message.isEcho(message.toString()))
+            {
+            	String username = userList.get(message.id);
+            	Message response = null;
+            	String responseString = "echo " + username + ": " + message.toString() + "\n";
+            	ByteBuffer buff = ByteBuffer.wrap(responseString.getBytes());
+            	return Message.getMessage(buff);
+            }
+            // No type match
+            // Return error
+            else 
+            {
+            	Message response = null;
+            	String responseString = "error message type does not match\n";
+            	ByteBuffer buff = ByteBuffer.wrap(responseString.getBytes());
+            	return Message.getMessage(buff);
+            }
         }
     }
 }
