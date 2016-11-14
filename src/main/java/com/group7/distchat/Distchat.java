@@ -187,11 +187,12 @@ public class Distchat extends Thread
             // Echo
             else if (Message.isEcho(message.toString()))
             {
-            	String username = userList.get(message.id);
+            	/*String username = userList.get(message.id);
             	Message response = null;
             	String responseString = "echo " + username + ": " + message.toString() + "\n";
             	ByteBuffer buff = ByteBuffer.wrap(responseString.getBytes());
-            	return Message.getMessage(buff);
+            	return Message.getMessage(buff);*/
+                return message;
             }
             // No type match
             // Return error

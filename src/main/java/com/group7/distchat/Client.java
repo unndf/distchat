@@ -146,7 +146,15 @@ public class Client {
             }
             else
             {
-                System.out.println("Please enter a valid command");
+                String messageString = "echo\n" + input + "\n";
+                sendToServer.write(messageString.toCharArray(),0,messageString.length());
+                sendToServer.flush();
+                
+                char[] buff = new char[MAX_MESSAGE_SIZE];
+                receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
+                String response = new String(buff);
+                System.out.println("Message from server: ");
+                System.out.println(response);
             }
             }
             catch (IOException e)
