@@ -37,8 +37,9 @@ public class Message
     public static final int M_ACCEPT = 1014;
     public static final int M_INFO = 1015;
     public static final int M_REPLICA_CONNECT = 1016;
-    public static final int M_OK = 1017;
-
+    public static final int M_WELCOME = 1017;
+    public static final int M_OK = 1018;
+   
     //static patterns matching the messages
     public static Pattern msgSendPattern;
     public static Pattern registerPattern;
@@ -58,6 +59,7 @@ public class Message
     public static Pattern infoPattern;
     public static Pattern replicaConnectPattern;
     public static Pattern okPattern;
+    public static Pattern welcomePattern;
 
     public int id = M_INVALID;
     //message type
@@ -78,7 +80,6 @@ public class Message
         chatRoomIDPattern = Pattern.compile("^chatRoomID\\r?\\n([0-9]+)\\r\\n", Pattern.DOTALL);
         msgPattern = Pattern.compile("^msg\\r?\\n(.+)\\r\\n", Pattern.DOTALL);
         loginPattern = Pattern.compile("^login\\r?\\n(.+)\\r\\n", Pattern.DOTALL);
-        //TODO: create regexes for these patterns
         connectPattern = Pattern.compile("^connect\\r?\\n",Pattern.DOTALL);
         pollPattern = Pattern.compile("^poll\\r?\\n(info|users|room|)",Pattern.DOTALL);
         packagePattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
@@ -86,6 +87,7 @@ public class Message
         infoPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
         replicaConnectPattern = Pattern.compile("^replica connect\\r?\\n",Pattern.DOTALL);
         okPattern = Pattern.compile("^ok\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
+        welcomePattern = Pattern.compile("^Welcome, \\r?\\n(.+)\\r\\n", Pattern.DOTALL);
     }
 
     public Message ()
@@ -129,6 +131,7 @@ public class Message
                 || isInfo(messageString)
                 || isReplicaConnect(messageString)
                 || isOk(messageString)
+                || isWelcome(messageString)
                 );
         //use regex for now
     }
@@ -225,6 +228,46 @@ public class Message
                 m.find();
                 retMessageString = m.group(0);
             }
+            else if (isConnect(messageString)){
+                Matcher m = connectPattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
+            else if (isPoll(messageString)){
+                Matcher m = pollPattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
+            else if (isPackage(messageString)){
+                Matcher m = packagePattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
+            else if (isAccept(messageString)){
+                Matcher m = acceptPattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
+            else if (isInfo(messageString)){
+                Matcher m = infoPattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
+            else if (isConnect(messageString)){
+                Matcher m = connectPattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            } 
+            else if (isReplicaConnect(messageString)){
+                Matcher m = replicaConnectPattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
+            else if (isWelcome(messageString)){
+                Matcher m = welcomePattern.matcher(messageString);
+                m.find();
+                retMessageString = m.group(0);
+            }
             retMessage = new Message(retMessageString);
             int byteLen = 0;
             try{
@@ -262,6 +305,13 @@ public class Message
         else if (isMsg(message))  		 return M_MSG;
         else if (isLogin(message))  	 return M_LOGIN;
         else if (isOk(message))          return M_OK;
+        else if (isConnect(message))	 return M_CONNECT;
+        else if (isPoll(message))	 	 return M_POLL;
+        else if (isPackage(message))	 return M_PACKAGE;
+        else if (isAccept(message))	 	 return M_ACCEPT;
+        else if (isInfo(message))	 	 return M_INFO;
+        else if (isReplicaConnect(message))  	 return M_REPLICA_CONNECT;
+        else if (isWelcome(message))  	 return M_WELCOME;
         else                             return M_INVALID; //not a valid message
     }
     /**
@@ -361,32 +411,37 @@ public class Message
     }
     public static boolean isConnect(String message)
     {
-        Matcher m = errorPattern.matcher(message);
+        Matcher m = connectPattern.matcher(message);
         return m.find();
     }   
     public static boolean isPoll(String message)
     {
-        Matcher m = errorPattern.matcher(message);
+        Matcher m = pollPattern.matcher(message);
         return m.find();
     }
     public static boolean isPackage(String message)
     {
-        Matcher m = errorPattern.matcher(message);
+        Matcher m = packagePattern.matcher(message);
         return m.find();
     }
     public static boolean isAccept(String message)
     {
-        Matcher m = errorPattern.matcher(message);
+        Matcher m = acceptPattern.matcher(message);
         return m.find();
     }
     public static boolean isInfo(String message)
     {
-        Matcher m = errorPattern.matcher(message);
+        Matcher m = infoPattern.matcher(message);
         return m.find();
     }
     public static boolean isReplicaConnect(String message)
     {
-        Matcher m = errorPattern.matcher(message);
+        Matcher m = replicaConnectPattern.matcher(message);
+        return m.find();
+    }
+    public static boolean isWelcome(String message)
+    {
+        Matcher m = welcomePattern.matcher(message);
         return m.find();
     }
     public int getMessageType ()
