@@ -60,7 +60,7 @@ public class DBHandler
      * @param int chatId: the id of the chat room we want to getMessage from
      * @return ArrayList<Message>
      */
-    public ArrayList<Message> getMessage(int chatId)
+    public ArrayList<Message> getRecentMessages(int chatId)
     {
         return null;
     }
@@ -69,10 +69,10 @@ public class DBHandler
      * @param String roomName: name of the chat room (must coorespond to a chatId)
      * @return ArrayList<Message>
      */
-    public ArrayList<Message> getMessage(String roomName)
+    public ArrayList<Message> getRecentMessages(String roomName)
     {
         int chatId = getChatId(roomName);
-        return getMessage(chatId);
+        return getRecentMessages(chatId);
     }
     /** returns the chatId of the room in question
      * @param String roomName
