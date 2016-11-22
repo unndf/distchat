@@ -11,7 +11,9 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-public class Client {
+public class Client extends Thread{
+
+    //STATIC VARS
     public static Pattern ipWithPortPattern;
     public static Pattern openCommandPattern;
     public static Pattern registerCommandPattern;
@@ -27,8 +29,31 @@ public class Client {
         leaveCommandPattern = Pattern.compile("!leave\\s+([\\w-]+)");
         loginCommandPattern = Pattern.compile("!login\\s+([\\w-]+)");
     }
+
+    public String host = "";
+    public int port = -1;
+    public String currentRoom = "";
+    public String username = "";
+    private Socket socket = null;
+    private BufferedReader receiveFromServer = null;
+    private BufferedWriter sendToServer = null;
+
     public static final int MAX_MESSAGE_SIZE = 8196;
+    public Client (String host, int port) throws IOException 
+    {
+        this.host = host;
+        this.port = port;
+
+        //try to connect  
+        socket = new Socket(host, port);
+        receiveFromServer = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        sendToServer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+    }
+    
+    
+    
     //Art is VERY important....
+    /*
     public static final String INIT_MESSAGE =
  "\n\n\n\n"+
  "/$$$$$$$ /$$$$$$ /$$$$$$ /$$$$$$$$/$$$$$$ /$$   /$$ /$$$$$$ /$$$$$$$$\n"+
@@ -40,9 +65,11 @@ public class Client {
  "| $$$$$$$//$$$$$|  $$$$$$/  | $$ |  $$$$$$| $$  | $| $$  | $$  | $$\n"+   
  "|_______/|______/\\______/   |__/  \\______/|__/  |__|__/  |__/  |__/\n" +
  "\nType \"help\" for a list of commands\nFor more info on the commands use \"help <command>\"\n\n";
-	public static void main(String[] args) throws IOException //lazt fix
+*/
+    /*
+public void run() throws IOException //lazt fix
     {
-	    Socket socket = null;
+	    /*Socket socket = null;
         String host = "";
         String currentRoom = "";
         String username = "";
@@ -71,8 +98,7 @@ public class Client {
         try 
         {
 			socket = new Socket(host, port);
-            sendToServer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-            receiveFromServer = new BufferedReader(new InputStreamReader(socket.getInputStream()));	
+
         }
         catch (IOException e) //Something wrong with IO
         {
@@ -87,82 +113,9 @@ public class Client {
         //if valid message
         //  queue for sending
         //  wait for interrupts from workers
-        while(true)
-        {
             String input = console.readLine(); //get input from user
-            try
-            {
-            if (isOpenCommand(input))
-            {
-                Matcher m = openCommandPattern.matcher(input);
-                m.find();
-                String roomName = m.group(1);
-                String messageString = "open\n" + roomName +"\n";
-                sendToServer.write(messageString.toCharArray(),0,messageString.length());
-                sendToServer.flush();
 
-                char[] buff = new char[MAX_MESSAGE_SIZE];
-                receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
-                String response = new String(buff);
-                if (Message.isOk(response))
-                {
-                    currentRoom = roomName;
-                }
-                else
-                {
-                    System.out.println("Room not found");
-                }
-            }
-            else if (isConnectCommand(input))
-            {
-                System.out.println("wow nice connect");
-            }
-            else if (isRegisterCommand(input))
-            {
-                System.out.println("wow nice register");
-            }
-            else if (isLoginCommand(input))
-            {
-                Matcher m = loginCommandPattern.matcher(input);
-                m.find();
-                String name = m.group(1);
-                String messageString = "login\n"+name+"\n";
-                sendToServer.write(messageString.toCharArray(),0,messageString.length());
-                sendToServer.flush();
-
-                char[] buff = new char[MAX_MESSAGE_SIZE];
-                receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
-                String response = new String(buff);
-
-                if (Message.isOk(response))
-                {
-                    System.out.println("Login Success");
-                    username = name;
-                }
-                else 
-                {
-                    System.out.println("Login unsuccessful");
-                }
-            }
-            else
-            {
-                String messageString = "echo\n" + input + "\n";
-                sendToServer.write(messageString.toCharArray(),0,messageString.length());
-                sendToServer.flush();
-                
-                char[] buff = new char[MAX_MESSAGE_SIZE];
-                receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
-                String response = new String(buff);
-                System.out.println("Message from server: ");
-                System.out.println(response);
-            }
-            }
-            catch (IOException e)
-            {
-                e.printStackTrace(); //TODO: We should actually handle it....
-            }
-        }
-	} // main
+	} // run*/
     public static boolean isOpenCommand (String command)
     {
         Matcher m = openCommandPattern.matcher(command);
@@ -194,5 +147,79 @@ public class Client {
         public void run()
         {
         }
+    }
+    public void sendMessage(String input)        
+    {
+        try
+            {
+                if (isOpenCommand(input))
+                {
+                    Matcher m = openCommandPattern.matcher(input);
+                    m.find();
+                    String roomName = m.group(1);
+                    String messageString = "open\n" + roomName +"\n";
+                    sendToServer.write(messageString.toCharArray(),0,messageString.length());
+                    sendToServer.flush();
+
+                    char[] buff = new char[MAX_MESSAGE_SIZE];
+                    receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
+                    String response = new String(buff);
+                    if (Message.isOk(response))
+                    {
+                        currentRoom = roomName;
+                    }
+                    else
+                    {
+                        System.out.println("Room not found");
+                    }
+                }
+                else if (isConnectCommand(input))
+                {
+                    System.out.println("wow nice connect");
+                }
+                else if (isRegisterCommand(input))
+                {
+                    System.out.println("wow nice register");
+                }
+                else if (isLoginCommand(input))
+                {
+                    Matcher m = loginCommandPattern.matcher(input);
+                    m.find();
+                    String name = m.group(1);
+                    String messageString = "login\n"+name+"\n";
+                    sendToServer.write(messageString.toCharArray(),0,messageString.length());
+                    sendToServer.flush();
+
+                    char[] buff = new char[MAX_MESSAGE_SIZE];
+                    receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
+                    String response = new String(buff);
+
+                    if (Message.isOk(response))
+                    {
+                        System.out.println("Login Success");
+                        username = name;
+                    }
+                    else 
+                    {
+                        System.out.println("Login unsuccessful");
+                    }
+                }
+                else
+                {
+                    String messageString = "echo\n" + input + "\n";
+                    sendToServer.write(messageString.toCharArray(),0,messageString.length());
+                    sendToServer.flush();
+                    
+                    char[] buff = new char[MAX_MESSAGE_SIZE];
+                    receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
+                    String response = new String(buff);
+                    System.out.println("Message from server: ");
+                    System.out.println(response);
+                }
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace(); //TODO: We should actually handle it....
+            }
     }
 }
