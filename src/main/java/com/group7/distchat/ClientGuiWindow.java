@@ -111,5 +111,7 @@ public class ClientGuiWindow {
 	private void sendToClient(String textToSend){
 		client.sendMessage(textToSend);
 	}
-
+    private void updateTextPane(){
+        String newText = client.response;
+    }
 }

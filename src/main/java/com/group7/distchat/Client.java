@@ -34,6 +34,7 @@ public class Client extends Thread{
     public int port = -1;
     public String currentRoom = "";
     public String username = "";
+    public String response = "";
     private Socket socket = null;
     private BufferedReader receiveFromServer = null;
     private BufferedWriter sendToServer = null;
@@ -170,16 +171,16 @@ public void run() throws IOException //lazt fix
                     }
                     else
                     {
-                        System.out.println("Room not found");
+                        response = "Room not found";
                     }
                 }
                 else if (isConnectCommand(input))
                 {
-                    System.out.println("wow nice connect");
+                    response = "wow nice connect";
                 }
                 else if (isRegisterCommand(input))
                 {
-                    System.out.println("wow nice register");
+                    response = "wow nice register";
                 }
                 else if (isLoginCommand(input))
                 {
