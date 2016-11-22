@@ -64,14 +64,15 @@ public class DBHandler
      * @return ArrayList<Message>
      * @throws SQLException 
      */
-    public ArrayList<Message> getRecentMessages(int chatId) throws SQLException
+    public ArrayList<String> getRecentMessages(int chatId) throws SQLException
     {
-    	ArrayList<Message> listOfMsgs = new ArrayList<>();
+    	ArrayList<String> listOfMsgs = new ArrayList<>();
     	int msgNumber = 0;	
     	ResultSet rs = state.executeQuery("SELECT * FROM DISTCHAT.MESSAGE WHERE CHAT_ID ="+ chatId); 
             while (msgNumber < 10) {			//Only get 10 messages for now.
-                listOfMsgs.addAll((Collection<? extends Message>) rs.getObject(msgNumber));			// We will have to figure out if this is how we want to get the messages. Or if it only want the content. 
-                msgNumber++;
+                //listOfMsgs.addAll((Collection<? extends Message>) rs.getObject(msgNumber));			// We will have to figure out if this is how we want to get the messages. Or if it only want the content. 
+                listOfMsgs.add(rs.getString(msgNumber));
+            	msgNumber++;
             }
         return listOfMsgs;
     }
@@ -81,7 +82,7 @@ public class DBHandler
      * @return ArrayList<Message>
      * @throws SQLException 
      */
-    public ArrayList<Message> getRecentMessages(String roomName) throws SQLException
+    public ArrayList<String> getRecentMessages(String roomName) throws SQLException
     {
         int chatId = getChatId(roomName);
         try {
