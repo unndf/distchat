@@ -2,6 +2,7 @@ package com.group7.distchat;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Collection;
 
 public class DBHandler
 {
@@ -9,20 +10,18 @@ public class DBHandler
     public static final String DB_LOCATION = "jdbc:h2:~/distchat";
     public static final String DB_USERNAME = "sa";
     public static final String DB_PASSWORD = "";
+
+    Connection connection = null;
+    Statement state = null;
     
-    public Connection connection = null;
-    public DBHandler()
+    
+    public DBHandler() throws ClassNotFoundException
     {
-        try
-        {
-        //load H2 driver
-            Class.forName("org.h2.Driver");
-            connection = DriverManager.getConnection(DB_LOCATION, DB_USERNAME, DB_PASSWORD);
-        }
-        catch (ClassNotFoundException e)
-        {
-            //H2 driver not loaded
-            e.printStackTrace();
+    	try{		//Try to create the state for the database (To alter it's elements)
+	    	Class.forName("org.h2.Driver");
+	    	connection = DriverManager.getConnection(DB_LOCATION, DB_USERNAME, DB_PASSWORD);
+	        state = connection.createStatement();
+            	//state.execute("insert into test values(1, 'JOHN')");
         }
         catch (SQLException e)
         {
@@ -42,45 +41,70 @@ public class DBHandler
      * add a message to the message table
      * @param int chatId: The Id of the chatroom we want to add a message to
      * @param String messageContent: The content of the message
+     * @throws SQLException 
      */
-    public boolean addMessage(int chatId, String messageContent)
+    public boolean addMessage(int chatId, String messageContent) throws SQLException
     {
+    	state.execute(String.format("insert into message(CHAR_ID, CONTENT) values(%d, '%s')", chatId, messageContent));		//<- I would prefer to do  it like this, or similar to this. Oh, it might work now! 		
         return false;
     }
     /**
      * add a chatRoom to the list of chatRooms
      * @return boolean: add the room was either a success or failure
+     * @throws SQLException 
      */
-    public boolean addChatRoom(String roomName)
+    public boolean addChatRoom(String roomName) throws SQLException
     {
+    	state.execute("INSERT INTO DISTCHAT.ROOM(NAME) VALUES('"+roomName+"')");
         return false;
     }
     /**
      * returns the most recent message in the room cooresponding to chatId
      * @param int chatId: the id of the chat room we want to getMessage from
      * @return ArrayList<Message>
+     * @throws SQLException 
      */
-    public ArrayList<Message> getRecentMessages(int chatId)
+    public ArrayList<String> getRecentMessages(int chatId) throws SQLException
     {
-        return null;
+    	ArrayList<String> listOfMsgs = new ArrayList<>();
+    	int msgNumber = 0;	
+    	ResultSet rs = state.executeQuery("SELECT * FROM DISTCHAT.MESSAGE WHERE CHAT_ID ="+ chatId); 
+            while (msgNumber < 10) {			//Only get 10 messages for now.
+            	if (rs.getString(msgNumber) != null){
+            		listOfMsgs.add(rs.getString(msgNumber));
+            		msgNumber++;
+            	}else{
+            		break;
+            	}
+            }
+        return listOfMsgs;
     }
     /**
      * returns the most recent messages in the room cooresponding to roomName
      * @param String roomName: name of the chat room (must coorespond to a chatId)
      * @return ArrayList<Message>
+     * @throws SQLException 
      */
-    public ArrayList<Message> getRecentMessages(String roomName)
+    public ArrayList<String> getRecentMessages(String roomName) throws SQLException
     {
         int chatId = getChatId(roomName);
-        return getRecentMessages(chatId);
+        try {
+			return getRecentMessages(chatId);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        return null;		//Messages could not be retrieved 
     }
     /** returns the chatId of the room in question
      * @param String roomName
      * @return int chatId
+     * @throws SQLException 
      */
-    public int getChatId(String roomName)
+    public int getChatId(String roomName) throws SQLException
     {
-        return -1;
+    	ResultSet rs = state.executeQuery("SELECT CHAT_ID FROM DISTCHAT.ROOM WHERE NAME = "+roomName);
+        return rs.getInt("chat_id");
     }
     /** Close the database connection and cleanup
      * @return Nothing
