@@ -10,6 +10,7 @@ import javax.swing.JTextPane;
 import javax.swing.JScrollBar;
 import java.awt.Color;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.awt.event.ActionEvent;
 import java.awt.Font;
 
@@ -17,6 +18,7 @@ public class ClientGuiWindow {
 
 	private JFrame frame;
 	private JTextField textField;
+	private Client client = null;
 
 	/**
 	 * Launch the application.
@@ -45,6 +47,17 @@ public class ClientGuiWindow {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
+		
+		// Make instance of client
+
+		try {
+			client = new Client("localHost", 9999);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			//Print message saying client could not be created.
+			e1.printStackTrace();
+		}
+		
 		frame = new JFrame();
 		frame.setBounds(100, 100, 463, 548);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -60,6 +73,10 @@ public class ClientGuiWindow {
 		btnSend.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				System.out.println("Button Pressed");
+				// Call send message method
+				sendToClient(textField.getText());
+				//client.sendMessage(textField.getText());		//Send message will be added in Client
+				textField.setText("");
 				
 			}
 		});
@@ -91,5 +108,8 @@ public class ClientGuiWindow {
 		lblNewLabel.setBounds(153, 6, 166, 42);
 		frame.getContentPane().add(lblNewLabel);
 	}
-	
+	private void sendToClient(String textToSend){
+		client.sendMessage(textToSend);
+	}
+
 }
