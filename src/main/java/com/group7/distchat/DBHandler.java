@@ -70,9 +70,12 @@ public class DBHandler
     	int msgNumber = 0;	
     	ResultSet rs = state.executeQuery("SELECT * FROM DISTCHAT.MESSAGE WHERE CHAT_ID ="+ chatId); 
             while (msgNumber < 10) {			//Only get 10 messages for now.
-                //listOfMsgs.addAll((Collection<? extends Message>) rs.getObject(msgNumber));			// We will have to figure out if this is how we want to get the messages. Or if it only want the content. 
-                listOfMsgs.add(rs.getString(msgNumber));
-            	msgNumber++;
+            	if (rs.getString(msgNumber) != null){
+            		listOfMsgs.add(rs.getString(msgNumber));
+            		msgNumber++;
+            	}else{
+            		break;
+            	}
             }
         return listOfMsgs;
     }
