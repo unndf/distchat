@@ -171,16 +171,17 @@ public void run() throws IOException //lazt fix
                     }
                     else
                     {
-                        response = "Room not found";
+                    	System.out.println("ROOM WAS NOT FOUND");
+                        this.response = "Room not found";
                     }
                 }
                 else if (isConnectCommand(input))
                 {
-                    response = "wow nice connect";
+                    this.response = "wow nice connect";
                 }
                 else if (isRegisterCommand(input))
                 {
-                    response = "wow nice register";
+                    this.response = "wow nice register";
                 }
                 else if (isLoginCommand(input))
                 {

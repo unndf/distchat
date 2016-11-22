@@ -19,6 +19,8 @@ public class ClientGuiWindow {
 	private JFrame frame;
 	private JTextField textField;
 	private Client client = null;
+	private JTextPane textPane = new JTextPane();
+	
 
 	/**
 	 * Launch the application.
@@ -77,6 +79,7 @@ public class ClientGuiWindow {
 				sendToClient(textField.getText());
 				//client.sendMessage(textField.getText());		//Send message will be added in Client
 				textField.setText("");
+				updateTextPane();
 				
 			}
 		});
@@ -91,7 +94,7 @@ public class ClientGuiWindow {
 		label.setBounds(89, 47, 166, 16);
 		frame.getContentPane().add(label);
 		
-		JTextPane textPane = new JTextPane();
+		//JTextPane textPane = new JTextPane();
 		textPane.setBackground(Color.WHITE);
 		textPane.setBounds(19, 75, 411, 405);
 		frame.getContentPane().add(textPane);
@@ -113,5 +116,7 @@ public class ClientGuiWindow {
 	}
     private void updateTextPane(){
         String newText = client.response;
+        System.out.println(newText);
+        textPane.setText(newText);
     }
 }
