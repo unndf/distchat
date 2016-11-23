@@ -33,9 +33,28 @@ public class DBHandler
      * @param String salt: The generated salt associated with the user (salts are generated using SHA512 on some seed value)
      * @param String hash: The result of SHA512(pass|salt) aka. SHA512(pass|SHA512(seed))
      * @return boolean: Adding a new user was a success or failure
+    */
     public boolean addUser(String nick, String salt, String hash)
     {
         return false;
+    }
+    /** Checks is the user is a registered user
+     * @param String nick: The users nick
+     * @return boolean: is a user or not
+     */
+    public boolean userExists(String nick) throws SQLException 
+    {
+        ResultSet rs = state.executeQuery(String.format("SELECT * FROM DISTCHAT.USER WHERE NICK = '%s'", nick));
+        return rs.next();
+    }
+    /** Checks if the room exists
+     * @param String room: name of the room
+     * @return boolean: room exists
+     */
+    public boolean roomExists(String room) throws SQLException
+    {
+        ResultSet rs = state.executeQuery(String.format("SELECT * FROM DISTCHAT.ROOM WHERE NAME = '%s'", room));
+        return rs.next();
     }
     /**
      * add a message to the message table
@@ -45,7 +64,7 @@ public class DBHandler
      */
     public boolean addMessage(int chatId, String messageContent) throws SQLException
     {
-    	state.execute(String.format("insert into message(CHAR_ID, CONTENT) values(%d, '%s')", chatId, messageContent));		//<- I would prefer to do  it like this, or similar to this. Oh, it might work now! 		
+    	state.execute(String.format("INSERT INTO DISTCHAT.MESSAGE(M_ID, CHAT_ID, CONTENT) values(%d, %d, '%s')", 0 ,chatId, messageContent));		//<- I would prefer to do  it like this, or similar to this. Oh, it might work now! 		
         return false;
     }
     /**
@@ -103,7 +122,8 @@ public class DBHandler
      */
     public int getChatId(String roomName) throws SQLException
     {
-    	ResultSet rs = state.executeQuery("SELECT CHAT_ID FROM DISTCHAT.ROOM WHERE NAME = "+roomName);
+    	ResultSet rs = state.executeQuery(String.format("SELECT CHAT_ID FROM DISTCHAT.ROOM WHERE NAME = '%s'", roomName));
+        rs.first();
         return rs.getInt("chat_id");
     }
     /** Close the database connection and cleanup

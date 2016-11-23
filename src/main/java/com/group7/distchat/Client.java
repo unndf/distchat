@@ -58,7 +58,6 @@ public class Client extends Thread{
             	socket.connect(new InetSocketAddress(serverHost, port), 5000);
     			receiveFromServer = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     	        sendToServer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-    	       // System.out.println("GOT HERE");
     	        break;
     		} catch (IOException e) {
     			System.out.println(String.format("Could not connect to server %s", serverHost));
@@ -66,8 +65,6 @@ public class Client extends Thread{
     		}
         }
     }
-    
-    
     
     //Art is VERY important....
     /*
@@ -175,8 +172,10 @@ public void run() throws IOException //lazt fix
 	                    Matcher m = openCommandPattern.matcher(input);
 	                    m.find();
 	                    String roomName = m.group(1);
-	                    String messageString = "open\n" + roomName +"\n";
-	                    sendToServer.write(messageString.toCharArray(),0,messageString.length());
+                        String messageString = "open\n" + roomName +"\n";
+	                    System.out.println("is NULL?");
+	                    System.out.println(sendToServer==null);
+                        sendToServer.write(messageString.toCharArray(),0,messageString.length());
 	                    sendToServer.flush();
 	
 	                    char[] buff = new char[MAX_MESSAGE_SIZE];
@@ -185,6 +184,7 @@ public void run() throws IOException //lazt fix
 	                    if (Message.isOk(response))
 	                    {
 	                        currentRoom = roomName;
+                            this.response = "opening " + roomName;
 	                    }
 	                    else
 	                    {
@@ -229,20 +229,45 @@ public void run() throws IOException //lazt fix
                 }
                 else
                 {
-                    String messageString = "echo\n" + input + "\n";
-                    sendToServer.write(messageString.toCharArray(),0,messageString.length());
-                    sendToServer.flush();
-                    
-                    char[] buff = new char[MAX_MESSAGE_SIZE];
-                    receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
-                    String response = new String(buff);
-                    System.out.println("Message from server: ");
-                    System.out.println(response);
+                    if(loggedIn() && roomOpened())
+                    {
+                        String messageString = "message-send\n" + currentRoom + "\n" + username + "\n" + input + "\n";
+                        sendToServer.write(messageString.toCharArray(),0,messageString.length());
+                        sendToServer.flush();
+                        
+                        char[] buff = new char[MAX_MESSAGE_SIZE];
+                        receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
+                        String response = new String(buff);
+                        System.out.println("Message from server: ");
+                        System.out.println(response);
+                        this.response = response;
+                    }
+                    else
+                    {
+                        String messageString = "echo\n" + input + "\n";
+                        sendToServer.write(messageString.toCharArray(),0,messageString.length());
+                        sendToServer.flush();
+                        
+                        char[] buff = new char[MAX_MESSAGE_SIZE];
+                        receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
+                        String response = new String(buff);
+                        System.out.println("Message from server: ");
+                        System.out.println(response);
+                        this.response = response;
+                    }
                 }
             }
             catch (IOException e)
             {
                 e.printStackTrace(); //TODO: We should actually handle it....
             }
+    }
+    public boolean loggedIn()
+    {
+        return !username.equals("");
+    }
+    public boolean roomOpened()
+    {
+        return !currentRoom.equals("");
     }
 }

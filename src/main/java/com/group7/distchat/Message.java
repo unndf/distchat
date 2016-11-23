@@ -73,7 +73,7 @@ public class Message
     //init patterns
     static
     {
-        msgSendPattern = Pattern.compile("^message-send\\r?\\n([0-9]+)\\r?\\n([0-9]+)\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
+        msgSendPattern = Pattern.compile("^message-send\\r?\\n([\\w-]+)\\r?\\n([\\w-]+)\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
         registerPattern = Pattern.compile("^register\\r?\\n([\\w-]+)\\r?\\n",Pattern.DOTALL);
         openPattern = Pattern.compile("^open\\r?\\n([\\w-]+)\\r?\\n",Pattern.DOTALL);
         echoPattern = Pattern.compile("^echo\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
@@ -342,7 +342,25 @@ public class Message
     public static boolean isMessageSend (String message)
     {
         Matcher m = msgSendPattern.matcher(message);
-        return m.matches();
+        return m.find();
+    }
+    public static String messageSendGetRoom (String message)
+    {
+        Matcher m = msgSendPattern.matcher(message);
+        m.find();
+        return m.group(1);
+    }
+    public static String messageSendGetNick (String message)
+    {
+        Matcher m = msgSendPattern.matcher(message);
+        m.find();
+        return m.group(2);
+    }
+    public static String messageSendGetContent (String message)
+    {
+        Matcher m = msgSendPattern.matcher(message);
+        m.find();
+        return m.group(3);
     }
     /**Method to determine if the message is of type register
      * @param String message

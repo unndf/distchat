@@ -52,13 +52,7 @@ public class ClientGuiWindow {
 		
 		// Make instance of client
 
-		try {
-			client = new Client("localHost", 9999);
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			//Print message saying client could not be created.
-			e1.printStackTrace();
-		}
+        client = new Client("localhost", 9999);
 		
 		frame = new JFrame();
 		frame.setBounds(100, 100, 463, 548);
@@ -115,7 +109,7 @@ public class ClientGuiWindow {
 		client.sendMessage(textToSend);
 	}
     private void updateTextPane(){
-        String newText = client.response;
+        String newText = textPane.getText() + "\n" + client.response;
         System.out.println(newText);
         textPane.setText(newText);
     }
