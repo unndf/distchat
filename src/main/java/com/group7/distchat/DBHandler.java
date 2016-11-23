@@ -38,6 +38,7 @@ public class DBHandler
     {
         return false;
     }
+
     /** Checks is the user is a registered user
      * @param String nick: The users nick
      * @return boolean: is a user or not
@@ -47,6 +48,7 @@ public class DBHandler
         ResultSet rs = state.executeQuery(String.format("SELECT * FROM DISTCHAT.USER WHERE NICK = '%s'", nick));
         return rs.next();
     }
+
     /** Checks if the room exists
      * @param String room: name of the room
      * @return boolean: room exists
@@ -56,6 +58,7 @@ public class DBHandler
         ResultSet rs = state.executeQuery(String.format("SELECT * FROM DISTCHAT.ROOM WHERE NAME = '%s'", room));
         return rs.next();
     }
+
     /**
      * add a message to the message table
      * @param int chatId: The Id of the chatroom we want to add a message to
@@ -67,6 +70,7 @@ public class DBHandler
     	state.execute(String.format("INSERT INTO DISTCHAT.MESSAGE(M_ID, CHAT_ID, CONTENT) values(%d, %d, '%s')", 0 ,chatId, messageContent));		//<- I would prefer to do  it like this, or similar to this. Oh, it might work now! 		
         return false;
     }
+
     /**
      * add a chatRoom to the list of chatRooms
      * @return boolean: add the room was either a success or failure
@@ -77,6 +81,7 @@ public class DBHandler
     	state.execute("INSERT INTO DISTCHAT.ROOM(NAME) VALUES('"+roomName+"')");
         return false;
     }
+
     /**
      * returns the most recent message in the room cooresponding to chatId
      * @param int chatId: the id of the chat room we want to getMessage from
@@ -98,6 +103,7 @@ public class DBHandler
             }
         return listOfMsgs;
     }
+
     /**
      * returns the most recent messages in the room cooresponding to roomName
      * @param String roomName: name of the chat room (must coorespond to a chatId)
@@ -115,6 +121,7 @@ public class DBHandler
 		}
         return null;		//Messages could not be retrieved 
     }
+
     /** returns the chatId of the room in question
      * @param String roomName
      * @return int chatId
@@ -126,6 +133,7 @@ public class DBHandler
         rs.first();
         return rs.getInt("chat_id");
     }
+
     /** Close the database connection and cleanup
      * @return Nothing
      */
