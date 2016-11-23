@@ -52,7 +52,6 @@ public class Distchat extends Thread
     }
     public void run ()
     {
-        //Temporary TODO: Let users add the rooms (somehow....)
 
         server = new Server(port,inQueue, outQueue);
         //start the server thread
@@ -127,6 +126,7 @@ public class Distchat extends Thread
             //  associate username with socket id
             //  send ok
         	// Login Response
+            // TODO
             if (Message.isLogin(message.toString()))
             {
                 String username = Message.loginGetUsername(message.toString());
