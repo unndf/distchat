@@ -1,13 +1,11 @@
 package com.group7.distchat;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.*;
 import java.net.UnknownHostException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
@@ -38,17 +36,35 @@ public class Client extends Thread{
     private Socket socket = null;
     private BufferedReader receiveFromServer = null;
     private BufferedWriter sendToServer = null;
-
+    private boolean userLoggedIn = false;
+    ArrayList<String> serverList = new ArrayList<>();
+    
     public static final int MAX_MESSAGE_SIZE = 8196;
-    public Client (String host, int port) throws IOException 
+    public Client (String host, int port)
     {
+    	serverList.add("162.246.156.110");
+    	serverList.add("localhost");
+    	
         this.host = host;
         this.port = port;
 
-        //try to connect  
-        socket = new Socket(host, port);
-        receiveFromServer = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        sendToServer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+        Iterator<String> iter = serverList.iterator();
+        while(iter.hasNext()){
+        	 //try to connect 
+        	String serverHost = iter.next();
+            try {
+
+            	Socket socket = new Socket();
+            	socket.connect(new InetSocketAddress(serverHost, port), 5000);
+    			receiveFromServer = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+    	        sendToServer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+    	       // System.out.println("GOT HERE");
+    	        break;
+    		} catch (IOException e) {
+    			System.out.println(String.format("Could not connect to server %s", serverHost));
+    			System.out.println("Attempting to connect to next server...");
+    		}
+        }
     }
     
     //Art is VERY important....
@@ -153,25 +169,29 @@ public void run() throws IOException //lazt fix
             {
                 if (isOpenCommand(input))
                 {
-                    Matcher m = openCommandPattern.matcher(input);
-                    m.find();
-                    String roomName = m.group(1);
-                    String messageString = "open\n" + roomName +"\n";
-                    sendToServer.write(messageString.toCharArray(),0,messageString.length());
-                    sendToServer.flush();
-
-                    char[] buff = new char[MAX_MESSAGE_SIZE];
-                    receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
-                    String response = new String(buff);
-                    if (Message.isOk(response))
-                    {
-                        currentRoom = roomName;
-                    }
-                    else
-                    {
-                    	System.out.println("ROOM WAS NOT FOUND");
-                        this.response = "Room not found";
-                    }
+                	if(userLoggedIn){
+	                    Matcher m = openCommandPattern.matcher(input);
+	                    m.find();
+	                    String roomName = m.group(1);
+	                    String messageString = "open\n" + roomName +"\n";
+	                    sendToServer.write(messageString.toCharArray(),0,messageString.length());
+	                    sendToServer.flush();
+	
+	                    char[] buff = new char[MAX_MESSAGE_SIZE];
+	                    receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
+	                    String response = new String(buff);
+	                    if (Message.isOk(response))
+	                    {
+	                        currentRoom = roomName;
+	                    }
+	                    else
+	                    {
+	                    	System.out.println("ROOM WAS NOT FOUND");
+	                        this.response = "Room not found";
+	                    }
+                	}else{
+                		this.response = "You must log in first";
+                	}
                 }
                 else if (isConnectCommand(input))
                 {
@@ -196,12 +216,13 @@ public void run() throws IOException //lazt fix
 
                     if (Message.isOk(response))
                     {
-                        System.out.println("Login Success");
+                        this.response = "Login Success";
                         username = name;
+                        userLoggedIn = true;
                     }
                     else 
                     {
-                        System.out.println("Login unsuccessful");
+                        this.response = "Login unsuccessful";
                     }
                 }
                 else
