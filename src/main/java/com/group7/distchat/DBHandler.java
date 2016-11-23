@@ -45,7 +45,7 @@ public class DBHandler
     public boolean userExists(String nick) throws SQLException 
     {
         ResultSet rs = state.executeQuery(String.format("SELECT * FROM DISTCHAT.USER WHERE NICK = '%s'", nick));
-        return rs!=null;
+        return rs.next();
     }
     /** Checks if the room exists
      * @param String room: name of the room
@@ -54,7 +54,7 @@ public class DBHandler
     public boolean roomExists(String room) throws SQLException
     {
         ResultSet rs = state.executeQuery(String.format("SELECT * FROM DISTCHAT.ROOM WHERE NAME = '%s'", room));
-        return rs!=null;
+        return rs.next();
     }
     /**
      * add a message to the message table
@@ -64,7 +64,7 @@ public class DBHandler
      */
     public boolean addMessage(int chatId, String messageContent) throws SQLException
     {
-    	state.execute(String.format("insert into message(CHAR_ID, CONTENT) values(%d, '%s')", chatId, messageContent));		//<- I would prefer to do  it like this, or similar to this. Oh, it might work now! 		
+    	state.execute(String.format("INSERT INTO DISTCHAT.MESSAGE(M_ID, CHAT_ID, CONTENT) values(%d, %d, '%s')", 0 ,chatId, messageContent));		//<- I would prefer to do  it like this, or similar to this. Oh, it might work now! 		
         return false;
     }
     /**
@@ -122,7 +122,8 @@ public class DBHandler
      */
     public int getChatId(String roomName) throws SQLException
     {
-    	ResultSet rs = state.executeQuery("SELECT CHAT_ID FROM DISTCHAT.ROOM WHERE NAME = "+roomName);
+    	ResultSet rs = state.executeQuery(String.format("SELECT CHAT_ID FROM DISTCHAT.ROOM WHERE NAME = '%s'", roomName));
+        rs.first();
         return rs.getInt("chat_id");
     }
     /** Close the database connection and cleanup

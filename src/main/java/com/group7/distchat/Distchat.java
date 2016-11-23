@@ -191,6 +191,34 @@ public class Distchat extends Thread
                     return response;
                 }
             }
+            if (Message.isMessageSend(message.toString()))
+            {
+                String username = userOpenList.get(message.id);
+                String messageString = message.toString();
+                int chatId = -1;
+                String content = Message.messageSendGetContent(messageString);
+                String room = Message.messageSendGetRoom(messageString);
+                String nick = Message.messageSendGetNick(messageString);
+                content = "<" + nick + "> " + content;
+
+                try 
+                {
+                    chatId = dbhandler.getChatId(room);
+                }
+                catch (SQLException e)
+                {
+                    e.printStackTrace();
+                }
+                System.out.println("ChatId::" + chatId);
+                try
+                {
+                    dbhandler.addMessage(chatId,content);
+                }
+                catch (SQLException e)
+                {
+                    e.printStackTrace();
+                }
+            }
             // Quit/Logout Response
             if (Message.isQuit(message.toString()))
             {
