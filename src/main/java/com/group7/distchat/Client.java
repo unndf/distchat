@@ -65,107 +65,65 @@ public class Client extends Thread{
     		}
         }
     }
-    
-    //Art is VERY important....
-    /*
-    public static final String INIT_MESSAGE =
- "\n\n\n\n"+
- "/$$$$$$$ /$$$$$$ /$$$$$$ /$$$$$$$$/$$$$$$ /$$   /$$ /$$$$$$ /$$$$$$$$\n"+
- "| $$__  $|_  $$_//$$__  $|__  $$__/$$__  $| $$  | $$/$$__  $|__  $$__/\n"+
- "| $$  \\ $$ | $$ | $$  \\__/  | $$ | $$  \\__| $$  | $| $$  \\ $$  | $$\n"+   
- "| $$  | $$ | $$ |  $$$$$$   | $$ | $$     | $$$$$$$| $$$$$$$$  | $$\n"+   
- "| $$  | $$ | $$  \\____  $$  | $$ | $$     | $$__  $| $$__  $$  | $$\n"+   
- "| $$  | $$ | $$  /$$  \\ $$  | $$ | $$    $| $$  | $| $$  | $$  | $$\n"+   
- "| $$$$$$$//$$$$$|  $$$$$$/  | $$ |  $$$$$$| $$  | $| $$  | $$  | $$\n"+   
- "|_______/|______/\\______/   |__/  \\______/|__/  |__|__/  |__/  |__/\n" +
- "\nType \"help\" for a list of commands\nFor more info on the commands use \"help <command>\"\n\n";
-*/
-    /*
-public void run() throws IOException //lazt fix
-    {
-	    /*Socket socket = null;
-        String host = "";
-        String currentRoom = "";
-        String username = "";
-        int port = -1;
-
-        System.out.println(INIT_MESSAGE);
-
-        //reader for user input stdin
-        BufferedReader console = new BufferedReader( new InputStreamReader(System.in));
-	    BufferedReader receiveFromServer = null;
-        BufferedWriter sendToServer = null;
-        //begin the inital connect to a server
-        System.out.println("Please connect to a Server (ipaddress:port)");
-        String ip = "";
-        ip = console.readLine();
-        Matcher matcher = ipWithPortPattern.matcher(ip);
-        while (!matcher.find())
-        {
-            System.out.println("please enter a valid host");
-            ip = console.readLine();
-            matcher = ipWithPortPattern.matcher(ip);
-        }
-        host = matcher.group(1);
-        port = Integer.parseInt(matcher.group(2));
-        System.out.println("Attempting Connect on " + host + " on port " + port + "...");
-        try 
-        {
-			socket = new Socket(host, port);
-
-        }
-        catch (IOException e) //Something wrong with IO
-        {
-            System.out.println("Failure");
-            e.printStackTrace(); //do nothing....
-        }
-        
-        System.out.println("Success!");
-        //While true
-        //get input from user
-        //validate input
-        //if valid message
-        //  queue for sending
-        //  wait for interrupts from workers
-            String input = console.readLine(); //get input from user
-
-	} // run*/
+    /** Detects if the user input is an openCommand
+     * @param command
+     * @return boolean
+     */
     public static boolean isOpenCommand (String command)
     {
         Matcher m = openCommandPattern.matcher(command);
         return m.find();
     }
+
+    /** Detects if the command is a connect command
+     * @param command
+     * @return boolean
+     */
     public static boolean isConnectCommand (String command)
     {
         Matcher m = connectCommandPattern.matcher(command);
         return m.find();
     }
+
+    /** Detects if the command is a register command
+     * @param command
+     * @return boolean
+     */
     public static boolean isRegisterCommand (String command)
     {
         Matcher m = registerCommandPattern.matcher(command);
         return m.find();
     }
+
+    /** Detects if the command is a login command
+     * @param command
+     * @return boolean
+     */
     public static boolean isLoginCommand (String command)
     {
         Matcher m = loginCommandPattern.matcher(command);
         return m.find();
     }
-    public class NetworkReader extends Thread
+
+    /** A worker thread to continually poll the server to see if anything has changed
+     */
+    public class PollWorker extends Thread
     {
         public void run()
         {
+            while(loggedIn() && roomOpened())
+            {
+                //poll 
+            }
         }
     }
-    public class NetworkWriter extends Thread
-    {
-        public void run()
-        {
-        }
-    }
+    /** Send a message to the server
+     * The response is set in the field response and has public access
+     */
     public void sendMessage(String input)        
     {
         try
-            {
+        {
                 if (isOpenCommand(input))
                 {
                 	if(userLoggedIn){
@@ -229,6 +187,8 @@ public void run() throws IOException //lazt fix
                 }
                 else
                 {
+                    //if the user is logged in and has a room opened then send a message-send
+                    //echo otherwise
                     if(loggedIn() && roomOpened())
                     {
                         String messageString = "message-send\n" + currentRoom + "\n" + username + "\n" + input + "\n";
@@ -255,17 +215,23 @@ public void run() throws IOException //lazt fix
                         System.out.println(response);
                         this.response = response;
                     }
-                }
-            }
+                }//end else
+            } //end try
             catch (IOException e)
             {
                 e.printStackTrace(); //TODO: We should actually handle it....
             }
     }
+    /** Is the user currently logged in?
+     * Naive implementation
+     */
     public boolean loggedIn()
     {
         return !username.equals("");
     }
+    /** Has the user opened a room?
+     * Naive implmentation
+     */
     public boolean roomOpened()
     {
         return !currentRoom.equals("");
