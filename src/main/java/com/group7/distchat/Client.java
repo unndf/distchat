@@ -51,8 +51,6 @@ public class Client extends Thread{
         sendToServer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
     }
     
-    
-    
     //Art is VERY important....
     /*
     public static final String INIT_MESSAGE =

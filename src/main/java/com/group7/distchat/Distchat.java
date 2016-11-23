@@ -22,6 +22,7 @@ public class Distchat extends Thread
     private Server server = null;
     private int port = -1;
     private boolean exit = false;
+    private DBHandler dbhandler = null;
     
     public static final String ENCODING = "UTF-8";
     public static final String LOGFILE = "server.log";
@@ -42,7 +43,10 @@ public class Distchat extends Thread
             FileHandler fh = new FileHandler (LOGFILE);
             fh.setFormatter(new SimpleFormatter());
             appLog.addHandler(fh);
+            dbhandler = new DBHandler();
         } catch (IOException e){
+            e.printStackTrace();
+        } catch (ClassNotFoundException e){
             e.printStackTrace();
         }
     }
@@ -133,9 +137,26 @@ public class Distchat extends Thread
             if (Message.isLogin(message.toString()))
             {
                 String username = Message.loginGetUsername(message.toString());
-                userList.put(message.id, username);
+                String responseString = "";
+                boolean userExists = false;
+                try
+                {
+                    userExists = dbhandler.userExists(username);
+                }
+                catch (SQLException e)
+                {
+                    e.printStackTrace();
+                }
+                if (userExists)
+                {
+                    userList.put(message.id, username);
+                    responseString = "ok\nmsg Welcome, " + username + "\n";
+                }
+                else 
+                {
+                    response = "error\nUser " + username +" Does not Exist\n";
+                }
                 Message response = null;
-                String responseString = "ok\nmsg Welcome, " + username + "\n";
                 ByteBuffer buff = ByteBuffer.wrap(responseString.getBytes());
                 return Message.getMessage(buff);
             }

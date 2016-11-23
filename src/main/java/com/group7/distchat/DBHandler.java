@@ -33,9 +33,15 @@ public class DBHandler
      * @param String salt: The generated salt associated with the user (salts are generated using SHA512 on some seed value)
      * @param String hash: The result of SHA512(pass|salt) aka. SHA512(pass|SHA512(seed))
      * @return boolean: Adding a new user was a success or failure
+    */
     public boolean addUser(String nick, String salt, String hash)
     {
         return false;
+    }
+    public boolean userExists(String nick) throws SQLException 
+    {
+        ResultSet rs = state.executeQuery(String.format("SELECT * FROM DISTCHAT.USER WHERE NICK = '%s'", nick));
+        return rs!=null;
     }
     /**
      * add a message to the message table
