@@ -10,13 +10,13 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.sql.SQLException;
 
 public class Distchat extends Thread
 {
     private LinkedList<Message> inQueue  = new LinkedList<Message>();
     private LinkedList<Message> outQueue = new LinkedList<Message>();
-    private ArrayList<String> roomList = new ArrayList<String>();
-    private Map<Integer,String> userList = new HashMap<Integer,String>();
+    //private Map<Integer,String> userList = new HashMap<Integer,String>();
     private Map<Integer,String> userOpenList = new HashMap<Integer,String>(); //Map of clients to rooms open
     private Logger appLog = Logger.getLogger("com.group7.distchat.Distchat");
     private Server server = null;
@@ -53,13 +53,6 @@ public class Distchat extends Thread
     public void run ()
     {
         //Temporary TODO: Let users add the rooms (somehow....)
-        roomList.add("roomA");
-        roomList.add("roomB");
-        roomList.add("roomC");
-        roomList.add("room-with-dashes");
-        roomList.add("roomB");
-        roomList.add("Demoroom");
-        roomList.add("Bestroom");
 
         server = new Server(port,inQueue, outQueue);
         //start the server thread
@@ -139,6 +132,9 @@ public class Distchat extends Thread
                 String username = Message.loginGetUsername(message.toString());
                 String responseString = "";
                 boolean userExists = false;
+
+                //I dont know if it's worth catching the SQLExceptions. If we have DB problems the entire thing should fail anyways
+                //TODO?
                 try
                 {
                     userExists = dbhandler.userExists(username);
@@ -149,30 +145,42 @@ public class Distchat extends Thread
                 }
                 if (userExists)
                 {
-                    userList.put(message.id, username);
                     responseString = "ok\nmsg Welcome, " + username + "\n";
                 }
                 else 
                 {
-                    response = "error\nUser " + username +" Does not Exist\n";
+                    responseString = "error\nUser " + username +" Does not Exist\n";
                 }
                 Message response = null;
                 ByteBuffer buff = ByteBuffer.wrap(responseString.getBytes());
                 return Message.getMessage(buff);
-            }
+            } //end Message.isLogin()
+
             //if type open
             if (Message.isOpen(message.toString()))
             {
                 String roomName = Message.openGetRoomName(message.toString());
                 String messageString = "";
+                boolean roomExists = false;
+                try 
+                {
+                    roomExists = dbhandler.roomExists(roomName);
+                }
+                catch (SQLException e)
+                {
+                    e.printStackTrace();
+                }
                 //The room the client is attempting to open exists
-                if (roomList.contains(roomName))
+                if (roomExists)
                 {
                     messageString = "ok\nOpen " + roomName + " Successful\n";
                     Message response = Message.getMessage(messageString);
                     response.id = message.id;
 
+                    //TODO:**********IMPORTANT************************
+                    //TODO:TEMPORARY STOP GAP. WE SHOULD USE SOME SORT OF TOKEN SYSTEM
                     userOpenList.put(response.id,roomName);
+                    //TODO:******************************************
                     return response;
                 }
                 else
@@ -186,12 +194,13 @@ public class Distchat extends Thread
             // Quit/Logout Response
             if (Message.isQuit(message.toString()))
             {
-            	if (userList.containsKey(message.id))
+            	/*TODO: rewrite
+                 * if (roomList.containsKey(message.id))
             	{
-            		String username = userList.get(message.id);
-                	userList.remove(message.id);
+            		//String username = userList.get(message.id);
+                	//userList.remove(message.id);
                 	Message response = null;
-                	String responseString = "Have a nice day, " + username + "\n";
+                	String responseString = "Have a nice day,\n";
                 	ByteBuffer buff = ByteBuffer.wrap(responseString.getBytes());
                 	return Message.getMessage(buff);
             	}
@@ -202,11 +211,13 @@ public class Distchat extends Thread
             		String responseString = "error user ID does not exist\n";
             		ByteBuffer buff = ByteBuffer.wrap(responseString.getBytes());
             		return Message.getMessage(buff);
-            	}
+            	}*/ 
+                //TODO: Echo for now
+                return message;
             	
             }
             // Echo
-            else if (Message.isEcho(message.toString()))
+            if (Message.isEcho(message.toString()))
             {
             	/*String username = userList.get(message.id);
             	Message response = null;
@@ -215,15 +226,19 @@ public class Distchat extends Thread
             	return Message.getMessage(buff);*/
                 return message;
             }
+            //Base case just echo....
+            //probably should ret null eventually
+            return message;
             // No type match
             // Return error
+            /*
             else 
             {
             	Message response = null;
             	String responseString = "error message type does not match\n";
             	ByteBuffer buff = ByteBuffer.wrap(responseString.getBytes());
             	return Message.getMessage(buff);
-            }
+            }*/
         }
     }
 }

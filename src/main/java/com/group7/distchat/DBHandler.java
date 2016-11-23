@@ -38,9 +38,22 @@ public class DBHandler
     {
         return false;
     }
+    /** Checks is the user is a registered user
+     * @param String nick: The users nick
+     * @return boolean: is a user or not
+     */
     public boolean userExists(String nick) throws SQLException 
     {
         ResultSet rs = state.executeQuery(String.format("SELECT * FROM DISTCHAT.USER WHERE NICK = '%s'", nick));
+        return rs!=null;
+    }
+    /** Checks if the room exists
+     * @param String room: name of the room
+     * @return boolean: room exists
+     */
+    public boolean roomExists(String room) throws SQLException
+    {
+        ResultSet rs = state.executeQuery(String.format("SELECT * FROM DISTCHAT.ROOM WHERE NAME = '%s'", room));
         return rs!=null;
     }
     /**
