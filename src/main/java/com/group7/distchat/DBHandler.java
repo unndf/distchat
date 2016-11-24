@@ -38,7 +38,6 @@ public class DBHandler
     {
         return false;
     }
-
     /** Checks is the user is a registered user
      * @param String nick: The users nick
      * @return boolean: is a user or not
@@ -121,7 +120,20 @@ public class DBHandler
 		}
         return null;		//Messages could not be retrieved 
     }
-
+    public String getMessagesAfter(int chatId, int mId) throws SQLException
+    {
+        //SQL Expression for this is 
+        //SELECT CONTENT FROM DISTCHAT.MESSAGE WHERE CHAT_ID = chatId AND M_ID > mId
+        return "";
+    }
+    /** gets the mid of the latest message in the chatroom
+     */
+    public int getLatestMessageId(int chatId) throws SQLException
+    {
+        //SQL Expression for this
+        //SELECT MAX(M_ID) FROM DISTCHAT.MESSAGE WHERE CHAT_ID = chatId
+        return 0;
+    }
     /** returns the chatId of the room in question
      * @param String roomName
      * @return int chatId
