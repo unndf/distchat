@@ -18,6 +18,7 @@ public class Distchat extends Thread
     private LinkedList<Message> outQueue = new LinkedList<Message>();
     //private Map<Integer,String> userList = new HashMap<Integer,String>();
     private Map<Integer,String> userOpenList = new HashMap<Integer,String>(); //Map of clients to rooms open
+    private Map<Integer,Integer> userProgress = new HashMap<Integer,String>(); //Map of clients to the message id they've read up to
     private Logger appLog = Logger.getLogger("com.group7.distchat.Distchat");
     private Server server = null;
     private int port = -1;
@@ -86,8 +87,9 @@ public class Distchat extends Thread
                 {
                     synchronized (inQueue){
                         inQueue.wait();
-                }
-                } catch (InterruptedException e)
+                    }
+                } 
+                catch (InterruptedException e)
                 {
                     e.printStackTrace();
                 }
@@ -209,7 +211,6 @@ public class Distchat extends Thread
                 {
                     e.printStackTrace();
                 }
-                System.out.println("ChatId::" + chatId);
                 try
                 {
                     dbhandler.addMessage(chatId,content);
@@ -217,6 +218,48 @@ public class Distchat extends Thread
                 catch (SQLException e)
                 {
                     e.printStackTrace();
+                }
+                //TODO: send something back instead of echo?
+            }
+            if (Message.isPoll(message.toString()))
+            {
+                String messageString = message.toString();
+                String responseString
+                int id = message.id;
+                int chatId = -1;
+                int mId = 0; //basecase, we havent polled yet so start polling from the first message
+
+                String room = Message.pollGetRoom(messageString);
+                //get chatId from the room name
+                try
+                {
+                    chatId = dbHandler.getChatId(room)
+                }
+                catch (SQLException e)
+                {
+                    e.printStackTrace();
+                    //TODO
+                }
+                
+                if (userProgress.containsKey(id))
+                {
+                    m_id = userProgress.get(id);
+                }
+                //attempt to retrive messages from that room from the message id after the one defined in our map
+                String messagePackage = "";
+                try
+                {
+                    messagePackage = dbHandler.getMessagesAfter(chatId,mId);
+                }
+                catch (SQLException e)
+                {
+                    e.printStackTrace();
+                }
+                if (messagePackage.equals("")) //the are no new messages
+                {
+                }
+                else //there are some new messages in the room
+                {
                 }
             }
             // Quit/Logout Response
