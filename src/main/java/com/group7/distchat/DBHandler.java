@@ -120,19 +120,30 @@ public class DBHandler
 		}
         return null;		//Messages could not be retrieved 
     }
-    public String getMessagesAfter(int chatId, int mId) throws SQLException
+    /** returns an arrayList of all the messages after the given message id
+     * @param int chatId: The id of the chatroom we'd like to get messages from
+     * @param int mId: the id of the last message we're not intrested (we'd like to get all messages after this id)
+     * @return ArrayList<String>: The list of messages. Can be empty
+     */
+    public ArrayList<String> getMessagesAfter(int chatId, int mId) throws SQLException
     {
-        //SQL Expression for this is 
-        //SELECT CONTENT FROM DISTCHAT.MESSAGE WHERE CHAT_ID = chatId AND M_ID > mId
-        return "";
+        ResultSet rs = state.executeQuery(String.format("SELECT CONTENT FROM DISTCHAT.MESSAGE WHERE CHAT_ID = %d AND M_ID > %d",chatId,mId));
+        ArrayList<String> ret = new ArrayList<String>();
+        while (rs.next())
+        {
+            ret.add(rs.getString(0)); // we only have a single column anyways
+        }
+        return ret;
     }
-    /** gets the mid of the latest message in the chatroom
+    /** gets the m_id of the latest message in the chatroom
+     * @param int chatId: chatId of the room
+     * @return int: The M_ID of the last message in the room
      */
     public int getLatestMessageId(int chatId) throws SQLException
     {
-        //SQL Expression for this
-        //SELECT MAX(M_ID) FROM DISTCHAT.MESSAGE WHERE CHAT_ID = chatId
-        return 0;
+        ResultSet rs = state.executeQuery(String.format("SELECT MAX(M_ID) FROM DISTCHAT.MESSAGE WHERE CHAT_ID = %d",chatId));
+        rs.next();
+        return rs.getInt(0);
     }
     /** returns the chatId of the room in question
      * @param String roomName
