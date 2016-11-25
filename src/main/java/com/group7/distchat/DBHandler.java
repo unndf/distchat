@@ -131,7 +131,7 @@ public class DBHandler
         ArrayList<String> ret = new ArrayList<String>();
         while (rs.next())
         {
-            ret.add(rs.getString(0)); // we only have a single column anyways
+            ret.add(rs.getString(1)); // we only have a single column anyways
         }
         return ret;
     }
@@ -143,7 +143,7 @@ public class DBHandler
     {
         ResultSet rs = state.executeQuery(String.format("SELECT MAX(M_ID) FROM DISTCHAT.MESSAGE WHERE CHAT_ID = %d",chatId));
         rs.next();
-        return rs.getInt(0);
+        return rs.getInt(1);
     }
     /** returns the chatId of the room in question
      * @param String roomName

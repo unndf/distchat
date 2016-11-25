@@ -85,8 +85,8 @@ public class Message
         msgPattern = Pattern.compile("^msg\\r?\\n(.+)\\r?\\n", Pattern.DOTALL);
         loginPattern = Pattern.compile("^login\\r?\\n([\\w-]+)\\r?\\n", Pattern.DOTALL);
         connectPattern = Pattern.compile("^connect\\r?\\n",Pattern.DOTALL);
-        pollPattern = Pattern.compile("^poll\\r?\\n(info|users|room)\\r?\\n(.*)\\r?\\n",Pattern.DOTALL);
-        packagePattern = Pattern.compile("^package\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
+        pollPattern = Pattern.compile("^poll\\r?\\n(info|users|rooms|messages)\\r?\\n(.*)\\r?\\n",Pattern.DOTALL);
+        packagePattern = Pattern.compile("^package\\r?\\n((?s).+)\\r?\\n",Pattern.DOTALL);
         acceptPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
         infoPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
         replicaConnectPattern = Pattern.compile("^replica connect\\r?\\n",Pattern.DOTALL);

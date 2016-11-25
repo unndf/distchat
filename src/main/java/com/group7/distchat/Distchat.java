@@ -266,7 +266,7 @@ public class Distchat extends Thread
                 {
                     String responseString = "package\n";
                     for (int i=0;i<messageList.size();i++)
-                        responseString = responseString + messageList.get(i);
+                        responseString = responseString + messageList.get(i); //+"\n"; DOTALL NOT WORKING...... 
                     
                     responseString = responseString + "\n";
                     Message response = Message.getMessage(responseString);

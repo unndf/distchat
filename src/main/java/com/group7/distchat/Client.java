@@ -18,6 +18,7 @@ public class Client extends Thread{
     public static Pattern connectCommandPattern;
     public static Pattern leaveCommandPattern;
     public static Pattern loginCommandPattern;
+    public static Pattern pollCommandPattern;
     static 
     {
         ipWithPortPattern = Pattern.compile("(\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d):(\\d?\\d?\\d?\\d?\\d)"); //NOTE: ONLY IPV4 IS SUPPORTED
@@ -26,6 +27,7 @@ public class Client extends Thread{
         registerCommandPattern = Pattern.compile("!register\\s+([\\w-]+)");
         leaveCommandPattern = Pattern.compile("!leave\\s+([\\w-]+)");
         loginCommandPattern = Pattern.compile("!login\\s+([\\w-]+)");
+        pollCommandPattern = Pattern.compile("!poll");
     }
 
     public String host = "";
@@ -102,6 +104,11 @@ public class Client extends Thread{
     public static boolean isLoginCommand (String command)
     {
         Matcher m = loginCommandPattern.matcher(command);
+        return m.find();
+    }
+    public static boolean isPollCommand (String command)
+    {
+        Matcher m = pollCommandPattern.matcher(command);
         return m.find();
     }
 
@@ -184,6 +191,26 @@ public class Client extends Thread{
                     {
                         this.response = "Login unsuccessful";
                     }
+                }
+                else if (isPollCommand(input) && roomOpened())
+                {
+                    String messageString = "poll\nmessages\n"+currentRoom+"\n";
+                    sendToServer.write(messageString.toCharArray(),0,messageString.length());
+                    sendToServer.flush();
+
+                    char[] buff = new char[MAX_MESSAGE_SIZE];
+                    receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
+                    String response = new String(buff);
+
+                    if (Message.isPackage(response))
+                    {
+                        this.response = "new messages: \n" + response.toString() + "\n";
+                    }
+                    else 
+                    {
+                        this.response = "No new Messages";
+                    }
+
                 }
                 else
                 {
