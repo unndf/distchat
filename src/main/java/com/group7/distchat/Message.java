@@ -82,11 +82,11 @@ public class Message
         msgIDPattern = Pattern.compile("^msgID\\r?\\n([0-9]+)\\r\\n", Pattern.DOTALL);
         userIDPattern = Pattern.compile("^userID\\r?\\n([0-9]+)\\r\\n", Pattern.DOTALL);
         chatRoomIDPattern = Pattern.compile("^chatRoomID\\r?\\n([0-9]+)\\r\\n", Pattern.DOTALL);
-        msgPattern = Pattern.compile("^msg\\r?\\n(.+)\\r\\n", Pattern.DOTALL);
+        msgPattern = Pattern.compile("^msg\\r?\\n(.+)\\r?\\n", Pattern.DOTALL);
         loginPattern = Pattern.compile("^login\\r?\\n([\\w-]+)\\r?\\n", Pattern.DOTALL);
         connectPattern = Pattern.compile("^connect\\r?\\n",Pattern.DOTALL);
-        pollPattern = Pattern.compile("^poll\\r?\\n(info|users|room|)",Pattern.DOTALL);
-        packagePattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
+        pollPattern = Pattern.compile("^poll\\r?\\n(info|users|rooms|messages)\\r?\\n(.*)\\r?\\n",Pattern.DOTALL);
+        packagePattern = Pattern.compile("^package\\r?\\n((?s).+)\\r?\\n",Pattern.DOTALL);
         acceptPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
         infoPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
         replicaConnectPattern = Pattern.compile("^replica connect\\r?\\n",Pattern.DOTALL);
@@ -456,6 +456,12 @@ public class Message
     {
         Matcher m = pollPattern.matcher(message);
         return m.find();
+    }
+    public static String pollGetRoom(String message)
+    {
+        Matcher m = pollPattern.matcher(message);
+        m.find();
+        return m.group(2);
     }
     public static boolean isPackage(String message)
     {
