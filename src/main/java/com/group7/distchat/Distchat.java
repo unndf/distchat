@@ -250,6 +250,8 @@ public class Distchat extends Thread
                 try
                 {
                     messageList = dbhandler.getMessagesAfter(chatId,mId);
+                    int latestMessageId = dbhandler.getLatestMessageId(chatId);
+                    userProgress.put(id,latestMessageId);
                 }
                 catch (SQLException e)
                 {
@@ -271,7 +273,6 @@ public class Distchat extends Thread
                     Message response = Message.getMessage(responseString);
                     response.id = message.id;
                     return response;
-
                 }
             }
             // Quit/Logout Response
