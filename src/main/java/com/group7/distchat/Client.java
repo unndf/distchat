@@ -144,8 +144,8 @@ public class Client extends Thread{
 	                    sendToServer.flush();
 	
 	                    char[] buff = new char[MAX_MESSAGE_SIZE];
-	                    receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
-	                    String response = new String(buff);
+	                    int bytesRecv = receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
+                        String response = new String(buff,0,bytesRecv);
 	                    if (Message.isOk(response))
 	                    {
 	                        currentRoom = roomName;
@@ -178,8 +178,8 @@ public class Client extends Thread{
                     sendToServer.flush();
 
                     char[] buff = new char[MAX_MESSAGE_SIZE];
-                    receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
-                    String response = new String(buff);
+                    int bytesRecv = receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
+                    String response = new String(buff,0,bytesRecv);
 
                     if (Message.isOk(response))
                     {
@@ -199,8 +199,8 @@ public class Client extends Thread{
                     sendToServer.flush();
 
                     char[] buff = new char[MAX_MESSAGE_SIZE];
-                    receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
-                    String response = new String(buff);
+                    int bytesRecv = receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
+                    String response = new String(buff,0,bytesRecv);
 
                     if (Message.isPackage(response))
                     {
@@ -223,8 +223,8 @@ public class Client extends Thread{
                         sendToServer.flush();
                         
                         char[] buff = new char[MAX_MESSAGE_SIZE];
-                        receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
-                        String response = new String(buff);
+                        int bytesRecv = receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
+                        String response = new String(buff,0,bytesRecv);
                         System.out.println("Message from server: ");
                         System.out.println(response);
                         this.response = response;
@@ -236,8 +236,8 @@ public class Client extends Thread{
                         sendToServer.flush();
                         
                         char[] buff = new char[MAX_MESSAGE_SIZE];
-                        receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
-                        String response = new String(buff);
+                        int bytesRecv = receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
+                        String response = new String(buff,0,bytesRecv);
                         System.out.println("Message from server: ");
                         System.out.println(response);
                         this.response = response;
