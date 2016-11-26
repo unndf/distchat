@@ -86,7 +86,7 @@ public class Message
         loginPattern = Pattern.compile("^login\\r?\\n([\\w-]+)\\r?\\n", Pattern.DOTALL);
         connectPattern = Pattern.compile("^connect\\r?\\n",Pattern.DOTALL);
         pollPattern = Pattern.compile("^poll\\r?\\n(info|users|rooms|messages)\\r?\\n(.*)\\r?\\n",Pattern.DOTALL);
-        packagePattern = Pattern.compile("^package\\r?\\n((?s).+)\\r?\\n",Pattern.DOTALL);
+        packagePattern = Pattern.compile("^package\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
         acceptPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
         infoPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
         replicaConnectPattern = Pattern.compile("^replica connect\\r?\\n",Pattern.DOTALL);
@@ -248,7 +248,7 @@ public class Message
             }
             else if (isPackage(messageString)){
                 Matcher m = packagePattern.matcher(messageString);
-                m.find();
+                m.matches();
                 retMessageString = m.group(0);
             }
             else if (isAccept(messageString)){
@@ -466,7 +466,7 @@ public class Message
     public static boolean isPackage(String message)
     {
         Matcher m = packagePattern.matcher(message);
-        return m.find();
+        return m.matches();
     }
     public static boolean isAccept(String message)
     {
