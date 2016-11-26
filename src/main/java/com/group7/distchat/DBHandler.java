@@ -66,7 +66,7 @@ public class DBHandler
      */
     public boolean addMessage(int chatId, String messageContent) throws SQLException
     {
-    	state.execute(String.format("INSERT INTO DISTCHAT.MESSAGE(M_ID, CHAT_ID, CONTENT) values(%d, %d, '%s')", 0 ,chatId, messageContent));		//<- I would prefer to do  it like this, or similar to this. Oh, it might work now! 		
+    	state.execute(String.format("INSERT INTO DISTCHAT.MESSAGE(CHAT_ID, CONTENT) values(%d, '%s')",chatId, messageContent));		//<- I would prefer to do  it like this, or similar to this. Oh, it might work now! 		
         return false;
     }
 
