@@ -44,12 +44,12 @@ public class Distchat extends Thread
             FileHandler fh = new FileHandler (LOGFILE);
             fh.setFormatter(new SimpleFormatter());
             appLog.addHandler(fh);
-            dbhandler = new DBHandler();
+            //dbhandler = new DBHandler();
         } catch (IOException e){
             e.printStackTrace();
-        } catch (ClassNotFoundException e){
-            e.printStackTrace();
-        }
+        } //catch (ClassNotFoundException e){
+           // e.printStackTrace();
+        //}
     }
     public void run ()
     {
@@ -103,7 +103,7 @@ public class Distchat extends Thread
                     }
                     //get a response
                     Message response = getResponse(request);
-                    response.id = request.id; //just in case...
+                    response.address = request.address; //just in case...
                     synchronized (outQueue) {
                         outQueue.addLast(response);
                         outQueue.notify();
@@ -177,7 +177,6 @@ public class Distchat extends Thread
                 {
                     messageString = "ok\nOpen " + roomName + " Successful\n";
                     Message response = Message.getMessage(messageString);
-                    response.id = message.id;
 
                     //TODO:**********IMPORTANT************************
                     //TODO:TEMPORARY STOP GAP. WE SHOULD USE SOME SORT OF TOKEN SYSTEM

@@ -2,6 +2,7 @@ package com.group7.distchat;
 
 import java.io.*;
 import java.nio.*;
+import java.net.*;
 import java.nio.channels.*;
 import java.net.UnknownHostException;
 import java.net.InetSocketAddress;
@@ -47,13 +48,23 @@ public class Client extends Thread{
     public static final int MAX_MESSAGE_SIZE = 8196;
     public Client (String host, int port)
     {
+        this.host = host;
+        this.port = port;
         try
         {
             //open a new datagramChannel
             datagramChannel = DatagramChannel.open();
-            InetSocketAddress addr = new InetSocketAddress("localhost",9191);
-            ByteBuffer message = ByteBuffer.wrap("hello".getBytes());
+            InetSocketAddress addr = new InetSocketAddress(host,port);
+            ByteBuffer message = ByteBuffer.wrap("echo\nwewlad\n".getBytes());
             datagramChannel.send(message,addr);
+
+            ByteBuffer buff = ByteBuffer.allocate(2048);
+            while (true)
+            {
+                SocketAddress address = datagramChannel.receive(buff);
+                Message m = Message.getMessage(buff);
+                System.out.println("WE RECEIVED A MESSAGE: " + m.toString());
+            }
         }
         catch (IOException e)
         {

@@ -129,6 +129,11 @@ public class Server extends Thread{
                             if (Message.isMessage(buff))
                             {
                                 Message message = Message.getMessage(buff);
+                                
+                                //set our return address
+                                message.address = addr;
+                                
+                                //queue our message
                                 synchronized(inQueue)
                                 {
                                     inQueue.addLast(message); //put recieved message on the queue
