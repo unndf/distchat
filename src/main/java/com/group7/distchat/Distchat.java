@@ -63,11 +63,6 @@ public class Distchat extends Thread
         //singleWorker
         QueueWorker worker = new QueueWorker();
         worker.start();
-        while(!exit)
-        {
-            //nothing lol
-        }
-
     }
     public static void main (String[] args)
     {
