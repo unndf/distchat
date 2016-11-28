@@ -79,7 +79,7 @@ public class Message
     {
         msgSendPattern = Pattern.compile("^message-send\\r?\\n([\\w-]+)\\r?\\n([\\w-]+)\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
         registerPattern = Pattern.compile("^register\\r?\\n([\\w-]+)\\r?\\n",Pattern.DOTALL);
-        openPattern = Pattern.compile("^open\\r?\\n([\\w-]+)\\r?\\n",Pattern.DOTALL);
+        openPattern = Pattern.compile("^open\\r?\\n([\\w-]+)\\r?\\n([\\d]+)\\r?\\n",Pattern.DOTALL);
         echoPattern = Pattern.compile("^echo\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
         errorPattern = Pattern.compile("^error\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
         quitPattern = Pattern.compile("^quit\\r?\\n\\r?\\n", Pattern.DOTALL);
@@ -390,6 +390,13 @@ public class Message
         Matcher m = openPattern.matcher(message);
         m.find();
         return m.group(1);
+    }
+    public static long openGetToken (String message)
+    {        
+        Matcher m = openPattern.matcher(message);
+        m.find();
+        return Long.parseLong(m.group(2));
+
     }
     /** Method to determine if the message is of type echo
      * @param String message

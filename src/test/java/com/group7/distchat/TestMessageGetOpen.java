@@ -10,7 +10,7 @@ public class TestMessageGetOpen
     public void isOpenString()
     {
         //ECHO regex works
-        String msgString = "open\n1337\n"; //open message
+        String msgString = "open\n1337\n3434\n"; //open message
         ByteBuffer buff = ByteBuffer.wrap(msgString.getBytes());
         assertTrue(Message.isOpen(msgString)); //the string *IS* an echo message
     }
@@ -18,7 +18,7 @@ public class TestMessageGetOpen
     @Test
     public void isMessage()
     {
-        String msgString = "open\n1337\n"; //open message
+        String msgString = "open\n1337\n2323\n"; //open message
         ByteBuffer buff = ByteBuffer.wrap(msgString.getBytes());
         assertTrue(Message.isMessage(buff));
     }
@@ -27,7 +27,7 @@ public class TestMessageGetOpen
     public void getMessage()
     {
         //put echo message into a byteBuffer
-        String msgString = "open\n1337\n"; //open message
+        String msgString = "open\n1337\n32423\n"; //open message
         ByteBuffer buff = ByteBuffer.wrap(msgString.getBytes());
         
         //Buffer has a message

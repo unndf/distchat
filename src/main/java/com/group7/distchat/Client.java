@@ -8,6 +8,8 @@ import java.net.UnknownHostException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -39,6 +41,8 @@ public class Client extends Thread{
     public String currentRoom = "";
     public String username = "";
     public String response = "";
+    public LinkedList<String> outputsToDisplay = new LinkedList<>(); //list of outputs that need to be displayed
+    public HashMap<String,PollWorker> pollWorkerList = new HashMap<>(); //list of workers currently active
     private Socket socket = null;
     private BufferedReader receiveFromServer = null;
     private BufferedWriter sendToServer = null;
@@ -59,12 +63,43 @@ public class Client extends Thread{
             datagramChannel.send(message,addr);
 
             ByteBuffer buff = ByteBuffer.allocate(2048);
-            while (true)
-            {
-                SocketAddress address = datagramChannel.receive(buff);
-                Message m = Message.getMessage(buff);
-                System.out.println("WE RECEIVED A MESSAGE: " + m.toString());
-            }
+            SocketAddress address = datagramChannel.receive(buff);
+            Message m = Message.getMessage(buff);
+            System.out.println("WE RECEIVED A MESSAGE:\n" + m.toString());
+            
+            message = ByteBuffer.wrap("echo\nwewlad\n".getBytes());
+            datagramChannel.send(message,addr);
+            address = datagramChannel.receive(buff);
+            m = Message.getMessage(buff);
+            System.out.println(m.toString()); 
+            
+            message = ByteBuffer.wrap("login\ndev\n".getBytes());
+            datagramChannel.send(message,addr);
+            address = datagramChannel.receive(buff);
+            m = Message.getMessage(buff);
+            System.out.println(m.toString());
+
+            message = ByteBuffer.wrap("open\ndemo-room\n0\n".getBytes());
+            datagramChannel.send(message,addr);
+            address = datagramChannel.receive(buff);
+            m = Message.getMessage(buff);
+            System.out.println(m.toString());
+
+            /*
+            message = ByteBuffer.wrap("login\ndev\n".getBytes());
+            datagramChannel.send(message,addr);
+               address = datagramChannel.receive(buff);
+            Message m = Message.getMessage(buff);
+            System.out.println(m.toString());         
+            message = ByteBuffer.wrap("login\ndev\n".getBytes());
+            datagramChannel.send(message,addr);
+            address = datagramChannel.receive(buff);
+            Message m = Message.getMessage(buff);
+            System.out.println(m.toString());
+            address = datagramChannel.receive(buff);
+            m = Message.getMessage(buff);
+            System.out.println("WE RECEIVED A MESSAGE:\n" + m.toString());
+            */
         }
         catch (IOException e)
         {
@@ -140,22 +175,6 @@ public class Client extends Thread{
         Matcher m = pollCommandPattern.matcher(command);
         return m.find();
     }
-
-    /** A worker thread to continually poll the server to see if anything has changed
-     */
-    public class PollWorker extends Thread
-    {
-        public void run()
-        {
-            while(loggedIn() && roomOpened())
-            {
-                //poll 
-            }
-        }
-    }
-    /** Send a message to the server
-     * The response is set in the field response and has public access
-     */
     public void sendMessage(String input)        
     {
         try
@@ -291,6 +310,21 @@ public class Client extends Thread{
     public boolean roomOpened()
     {
         return !currentRoom.equals("");
+    }
+    public class PollWorker extends Thread
+    {
+        public void run()
+        {
+        }
+    }
+    public void run()
+    {
+        //try to connect to a server in the list of knownhosts
+        //fall through the list
+        //if (!join room)
+        //  start(pollWorker room)
+        //if (!leave room)
+        //  kill(pollWorker room)
     }
     public static void main(String[]args)
     {

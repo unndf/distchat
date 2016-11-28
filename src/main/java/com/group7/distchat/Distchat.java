@@ -16,11 +16,12 @@ public class Distchat extends Thread
 {
     private LinkedList<Message> inQueue  = new LinkedList<Message>();
     private LinkedList<Message> outQueue = new LinkedList<Message>();
-    //private Map<Integer,String> userList = new HashMap<Integer,String>();
-    private Map<Integer,String> userOpenList = new HashMap<Integer,String>(); //Map of clients to rooms open
-    private Map<Integer,Integer> userProgress = new HashMap<Integer,Integer>(); //Map of clients to the message id they've read up to
+    private Map<String,Long> loggedInUsers = new HashMap<String,Long>();
+    private Map<Long,String> userOpenList = new HashMap<Long,String>();      //Map of clients to rooms open
+    private Map<Long,Integer> userProgress = new HashMap<Long,Integer>();    //Map of clients to the message id they've read up to
     private Logger appLog = Logger.getLogger("com.group7.distchat.Distchat");
     private Server server = null;
+    private long currentToken = 0;
     private int port = -1;
     private boolean exit = false;
     private DBHandler dbhandler = null;
@@ -44,12 +45,12 @@ public class Distchat extends Thread
             FileHandler fh = new FileHandler (LOGFILE);
             fh.setFormatter(new SimpleFormatter());
             appLog.addHandler(fh);
-            //dbhandler = new DBHandler();
+            dbhandler = new DBHandler();
         } catch (IOException e){
             e.printStackTrace();
-        } //catch (ClassNotFoundException e){
-           // e.printStackTrace();
-        //}
+        } catch (ClassNotFoundException e){
+            e.printStackTrace();
+        }
     }
     public void run ()
     {
@@ -147,7 +148,9 @@ public class Distchat extends Thread
                 }
                 if (userExists)
                 {
-                    responseString = "ok\nmsg Welcome, " + username + "\n";
+                    long token = genToken();
+                    loggedInUsers.put(username,token);
+                    responseString = "ok\n" + token + "\n";
                 }
                 else 
                 {
@@ -161,6 +164,7 @@ public class Distchat extends Thread
             //if type open
             if (Message.isOpen(message.toString()))
             {
+                long token = Message.openGetToken(message.toString());
                 String roomName = Message.openGetRoomName(message.toString());
                 String messageString = "";
                 boolean roomExists = false;
@@ -178,10 +182,7 @@ public class Distchat extends Thread
                     messageString = "ok\nOpen " + roomName + " Successful\n";
                     Message response = Message.getMessage(messageString);
 
-                    //TODO:**********IMPORTANT************************
-                    //TODO:TEMPORARY STOP GAP. WE SHOULD USE SOME SORT OF TOKEN SYSTEM
-                    userOpenList.put(response.id,roomName);
-                    //TODO:******************************************
+                    userOpenList.put(token,roomName);
                     return response;
                 }
                 else
@@ -250,7 +251,7 @@ public class Distchat extends Thread
                 {
                     messageList = dbhandler.getMessagesAfter(chatId,mId);
                     int latestMessageId = dbhandler.getLatestMessageId(chatId);
-                    userProgress.put(id,latestMessageId);
+                    //userProgress.put(id,latestMessageId);
                 }
                 catch (SQLException e)
                 {
@@ -323,5 +324,9 @@ public class Distchat extends Thread
             	return Message.getMessage(buff);
             }*/
         }
+    }
+    public long genToken()
+    {
+        return  (this.currentToken++);
     }
 }

@@ -24,7 +24,7 @@ public class Server extends Thread{
     public static final int SELECT_TIMEOUT = 500; //milliseconds
     public static final String ENCODING = "UTF-8";
     public static final String LOGFILE = "server.log";
-
+    public static final String MULTCAST_ADDR = "225.4.4.6";
     private boolean exit = false;
     private int port = 0;
     private Logger serverLog = Logger.getLogger("com.group7.distchat.Server");
