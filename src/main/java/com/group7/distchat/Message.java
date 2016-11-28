@@ -5,6 +5,9 @@ import java.util.regex.Matcher;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.io.*;
+import java.nio.*;
+import java.nio.channels.*;
+import java.net.*;
 
 public class Message
 {
@@ -66,6 +69,7 @@ public class Message
     public static Pattern logoutPattern;				//Logout is for leaving the chat room program
 
     public int id = M_INVALID;
+    public SocketAddress address;
     //message type
     private int type = M_INVALID;
     private String messageString = "";
@@ -509,5 +513,12 @@ public class Message
     public String toString()
     {
         return messageString;
+    }
+    public ByteBuffer buffer()
+    {
+        String messageString = this.toString();
+        byte[] messageBytes = messageString.getBytes();
+        ByteBuffer buff = ByteBuffer.wrap(messageBytes);
+        return buff;
     }
 }
