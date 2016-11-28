@@ -58,19 +58,13 @@ public class Server extends Thread{
      * A selector is opened and register for accepting
      * The operation of the Server is as follows
      * while (true)
-     *  -Let QueueWorker(s) unload the outq into the outgoing buffers (sendBuffers)
+     *  -Let QueueWorker(s) unload the outq
      *  -select()
      *  -forall (sockets with operation)
      *      -if (operation is read)
      *          -read or continue reading
      *          if (hasMessage)
      *              -add message to incoming queue
-     *              -set interested operation to write
-     *      -if (operation is write)
-     *          -write or ccntinue writing
-     *          if (done writing)
-     *              -delete sendBuffer
-     *              -set interested operation to read
      */
     public void run ()
     {

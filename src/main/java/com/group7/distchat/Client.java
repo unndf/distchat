@@ -1,6 +1,8 @@
 package com.group7.distchat;
 
 import java.io.*;
+import java.nio.*;
+import java.nio.channels.*;
 import java.net.UnknownHostException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -30,6 +32,7 @@ public class Client extends Thread{
         pollCommandPattern = Pattern.compile("!poll");
     }
 
+    public DatagramChannel datagramChannel = null;
     public String host = "";
     public int port = -1;
     public String currentRoom = "";
@@ -44,7 +47,21 @@ public class Client extends Thread{
     public static final int MAX_MESSAGE_SIZE = 8196;
     public Client (String host, int port)
     {
-    	serverList.add("162.246.156.110");
+        try
+        {
+            //open a new datagramChannel
+            datagramChannel = DatagramChannel.open();
+            InetSocketAddress addr = new InetSocketAddress("localhost",9191);
+            ByteBuffer message = ByteBuffer.wrap("hello".getBytes());
+            datagramChannel.send(message,addr);
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+
+        /*
+        serverList.add("162.246.156.110");
     	serverList.add("localhost");
     	
         this.host = host;
@@ -66,6 +83,7 @@ public class Client extends Thread{
     			System.out.println("Attempting to connect to next server...");
     		}
         }
+        */
     }
     /** Detects if the user input is an openCommand
      * @param command
@@ -262,5 +280,10 @@ public class Client extends Thread{
     public boolean roomOpened()
     {
         return !currentRoom.equals("");
+    }
+    public static void main(String[]args)
+    {
+        Client c = new Client("localhost",9191);
+        //done!
     }
 }
