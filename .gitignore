@@ -2,3 +2,4 @@
 *.list
 *.jar
 clientOutput.txt
+/target/

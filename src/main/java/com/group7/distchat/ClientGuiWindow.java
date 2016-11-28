@@ -10,6 +10,8 @@ import javax.swing.JTextPane;
 import javax.swing.JScrollBar;
 import java.awt.Color;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.IOException;
 import java.awt.event.ActionEvent;
 import java.awt.Font;
@@ -52,13 +54,7 @@ public class ClientGuiWindow {
 		
 		// Make instance of client
 
-		try {
-			client = new Client("localHost", 9999);
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			//Print message saying client could not be created.
-			e1.printStackTrace();
-		}
+		client = new Client("localHost", 9999);
 		
 		frame = new JFrame();
 		frame.setBounds(100, 100, 463, 548);
@@ -69,6 +65,16 @@ public class ClientGuiWindow {
 		textField.setBounds(6, 492, 342, 28);
 		frame.getContentPane().add(textField);
 		textField.setColumns(10);
+		textField.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				System.out.println("Enter Key Pressed");
+				// Call send message method
+				sendToClient(textField.getText());
+				textField.setText("");
+				updateTextPane();			
+			}
+		});
+
 		
 		JButton btnSend = new JButton("Send");
 		btnSend.setForeground(Color.BLACK);
@@ -77,12 +83,11 @@ public class ClientGuiWindow {
 				System.out.println("Button Pressed");
 				// Call send message method
 				sendToClient(textField.getText());
-				//client.sendMessage(textField.getText());		//Send message will be added in Client
 				textField.setText("");
-				updateTextPane();
-				
+				updateTextPane();		
 			}
 		});
+		
 		btnSend.setBounds(340, 493, 117, 29);
 		frame.getContentPane().add(btnSend);
 		
@@ -102,7 +107,7 @@ public class ClientGuiWindow {
 		JScrollBar scrollBar = new JScrollBar();
 		scrollBar.setBackground(Color.LIGHT_GRAY);
 		scrollBar.setForeground(Color.DARK_GRAY);
-		scrollBar.setBounds(429, 42, 15, 439);
+		scrollBar.setBounds(429, 76, 15, 405);
 		frame.getContentPane().add(scrollBar);
 		
 		JLabel lblNewLabel = new JLabel("Chit-Chat Messaging!");
@@ -117,6 +122,6 @@ public class ClientGuiWindow {
     private void updateTextPane(){
         String newText = client.response;
         System.out.println(newText);
-        textPane.setText(newText);
+        textPane.setText(newText = textPane.getText() + newText + "\n");
     }
 }
