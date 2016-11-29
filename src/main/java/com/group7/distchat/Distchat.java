@@ -124,7 +124,13 @@ public class Distchat extends Thread
             //  associate username with socket id
             //  send ok
         	// Login Response
-            // TODO
+            if (Message.isConnect(message.toString()))
+            {
+                //send back ack
+                String responseString = "ok\nall clear\n";
+                ByteBuffer buff = ByteBuffer.wrap(responseString.getBytes());
+                return Message.getMessage(buff);
+            }
             if (Message.isLogin(message.toString()))
             {
                 String username = Message.loginGetUsername(message.toString());

@@ -24,23 +24,29 @@ public class Client extends Thread{
     public static Pattern leaveCommandPattern;
     public static Pattern loginCommandPattern;
     public static Pattern pollCommandPattern;
+    public static Pattern hostsPattern;
     static 
     {
         ipWithPortPattern = Pattern.compile("(\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d):(\\d?\\d?\\d?\\d?\\d)"); //NOTE: ONLY IPV4 IS SUPPORTED
         openCommandPattern = Pattern.compile("!open\\s+([\\w-]+)");
-        connectCommandPattern = Pattern.compile("!connect\\s+(\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d):(\\d?\\d?\\d?\\d)");
+        connectCommandPattern = Pattern.compile("!connect");
         registerCommandPattern = Pattern.compile("!register\\s+([\\w-]+)");
         leaveCommandPattern = Pattern.compile("!leave\\s+([\\w-]+)");
         loginCommandPattern = Pattern.compile("!login\\s+([\\w-]+)");
         pollCommandPattern = Pattern.compile("!poll");
+        hostsPattern = Pattern.compile("([\\w\\.]+):(\\d+)",Pattern.MULTILINE);
     }
 
     public DatagramChannel datagramChannel = null;
     public String host = "";
+    public String hostFile = "";
     public int port = -1;
+    public Object timeoutLock = new Object();
+
     public String currentRoom = "";
     public String username = "";
     public String response = "";
+    public int loginToken = -1;
     public LinkedList<String> outputsToDisplay = new LinkedList<>(); //list of outputs that need to be displayed
     public HashMap<String,PollWorker> pollWorkerList = new HashMap<>(); //list of workers currently active
     private Socket socket = null;
@@ -50,14 +56,16 @@ public class Client extends Thread{
     ArrayList<String> serverList = new ArrayList<>();
     
     public static final int MAX_MESSAGE_SIZE = 8196;
-    public Client (String host, int port)
+    public static final int TIMEOUT = 5000; //5 second timeouts
+    public Client (String hostFile)
     {
-        this.host = host;
-        this.port = port;
-        try
+        this.hostFile = hostFile;
+/*        try
         {
             //open a new datagramChannel
             datagramChannel = DatagramChannel.open();
+            host = "localhost";
+            port = 9191;
             InetSocketAddress addr = new InetSocketAddress(host,port);
             ByteBuffer message = ByteBuffer.wrap("echo\nwewlad\n".getBytes());
             datagramChannel.send(message,addr);
@@ -84,7 +92,7 @@ public class Client extends Thread{
             address = datagramChannel.receive(buff);
             m = Message.getMessage(buff);
             System.out.println(m.toString());
-
+*/
             /*
             message = ByteBuffer.wrap("login\ndev\n".getBytes());
             datagramChannel.send(message,addr);
@@ -98,14 +106,13 @@ public class Client extends Thread{
             System.out.println(m.toString());
             address = datagramChannel.receive(buff);
             m = Message.getMessage(buff);
-            System.out.println("WE RECEIVED A MESSAGE:\n" + m.toString());
-            */
-        }
+            System.out.println("WE RECEIVED A MESSAGE:\n" + m.toString());*/
+/*        }
         catch (IOException e)
         {
             e.printStackTrace();
-        }
-
+        } 
+/*
         /*
         serverList.add("162.246.156.110");
     	serverList.add("localhost");
@@ -130,6 +137,80 @@ public class Client extends Thread{
     		}
         }
         */
+    }
+    public boolean connect()
+    {
+        try
+        {
+            BufferedReader freader = new BufferedReader(new FileReader(hostFile));
+            String hostString = freader.readLine();
+            while (hostString != null)
+            {
+                System.out.println("Attemping to connect to " + hostString + "...");
+                Matcher m = hostsPattern.matcher(hostString);
+                String message = "connect\n";
+                ByteBuffer buff = null;
+                ByteBuffer inBuff = ByteBuffer.allocate(2048);
+                
+                datagramChannel = DatagramChannel.open();
+                if(m.find())
+                {
+                    String hostAddr = m.group(1);
+                    String hostPort = m.group(2);
+
+                    InetSocketAddress addr = new InetSocketAddress(hostAddr
+                                                                   ,Integer.parseInt(hostPort));
+                    
+                    try
+                    {
+                        //send connect message to host:port
+                        buff = ByteBuffer.wrap(message.getBytes());
+                        datagramChannel.send(buff,addr);
+                    
+                        receiveWithTimeout();
+                        return true; //found a host, dont care about the contents of the packet
+                    } 
+                    catch (SocketTimeoutException e)
+                    {
+                        System.out.println("Couldnt not connect to " + hostString);
+                    }
+                    catch (UnresolvedAddressException e)
+                    {
+                        System.out.println("Couldnt not connect to " + hostString);
+                    }
+                }   
+                hostString = freader.readLine();
+            }
+            datagramChannel = null;
+            return false; //could not find a host
+        }
+        catch (FileNotFoundException e)
+        {
+            e.printStackTrace();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+        return false; //could not find a host
+    }
+    public byte[] receiveWithTimeout() throws SocketTimeoutException,IOException
+    {
+        //create a datagram packet
+        DatagramPacket packet = new DatagramPacket(new byte[2048],2048);
+        
+        //get the underlying socket
+        DatagramSocket sock = datagramChannel.socket();
+
+        //set the socket timeout
+        sock.setSoTimeout(TIMEOUT);
+        
+        //receive the packet
+        sock.receive(packet);
+  
+
+        //return the byte[]
+        return packet.getData();
     }
     /** Detects if the user input is an openCommand
      * @param command
@@ -177,6 +258,7 @@ public class Client extends Thread{
     }
     public void sendMessage(String input)        
     {
+        /*
         try
         {
                 if (isOpenCommand(input))
@@ -291,11 +373,12 @@ public class Client extends Thread{
                         this.response = response;
                     }
                 }//end else
-            } //end try
+            } */ //end try 
+    /*
             catch (IOException e)
             {
                 e.printStackTrace(); //TODO: We should actually handle it....
-            }
+            }*/
     }
     /** Is the user currently logged in?
      * Naive implementation
@@ -328,7 +411,48 @@ public class Client extends Thread{
     }
     public static void main(String[]args)
     {
-        Client c = new Client("localhost",9191);
-        //done!
+        Client client = new Client("known_hosts");
+        //start workers
+        //while true
+        //  get input
+        //  validate
+        //  if valid command
+        //      queue approiate message
+        //
+        
+        //start workers TODO
+        
+        //get input from stdin
+        BufferedReader console = new BufferedReader(new InputStreamReader(System.in));
+        while (true)
+        {
+            try
+            {
+                String input = console.readLine();
+                if (isConnectCommand(input))
+                {
+                    if (client.connect())
+                        System.out.println("Successfully Connected!");
+                    else
+                    {
+                        System.out.println("Could not connect to the network\nPlease check your connection settings");
+                        System.exit(0);
+                    }
+                }
+                if (isLoginCommand(input) && (client.datagramChannel != null))
+                {
+                    if (client.login())
+                        System.out.println("login successfull");
+                }
+                if (isOpenCommand(input) && (client.datagramChannel != null))
+                {
+                    //open
+                }
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+        }
     }
 }
