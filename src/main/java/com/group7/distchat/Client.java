@@ -46,7 +46,7 @@ public class Client extends Thread{
     public String currentRoom = "";
     public String username = "";
     public String response = "";
-    public int loginToken = -1;
+    public int token = -1;
     public LinkedList<String> outputsToDisplay = new LinkedList<>(); //list of outputs that need to be displayed
     public HashMap<String,PollWorker> pollWorkerList = new HashMap<>(); //list of workers currently active
     private Socket socket = null;
@@ -138,6 +138,11 @@ public class Client extends Thread{
         }
         */
     }
+    /**Attempt to "connect" to a server in our list of known_hosts.
+     * Uses fall-through, it will try to connect to the first one in the list then if it can't it will try the next
+     * @param void Nothing
+     * @return boolean: We were able to connect to one of the hosts in the list
+     */
     public boolean connect()
     {
         try
@@ -168,6 +173,10 @@ public class Client extends Thread{
                         datagramChannel.send(buff,addr);
                     
                         receiveWithTimeout();
+
+                        //set our current host:port to the one we connected to
+                        this.host = hostAddr;
+                        this.port = Integer.parseInt(hostPort);
                         return true; //found a host, dont care about the contents of the packet
                     } 
                     catch (SocketTimeoutException e)
@@ -193,6 +202,97 @@ public class Client extends Thread{
             e.printStackTrace();
         }
         return false; //could not find a host
+    }
+    public boolean login(String input)
+    {
+        try
+        {
+            if (connect())
+            {
+                Matcher m = loginCommandPattern.matcher(input);
+                m.find();
+
+                String username = m.group(1);
+                String messageString = "login\n" + username + "\n";
+                ByteBuffer buff = ByteBuffer.wrap(messageString.getBytes());
+                InetSocketAddress addr = new InetSocketAddress (this.host,this.port);
+
+                datagramChannel.send(buff,addr);
+
+                //wait for ack
+                try
+                {
+                    byte[] ack = receiveWithTimeout();
+                    String response = new String(ack);
+                    if (Message.isOk(response))
+                    {
+                        this.token = Message.okGetToken(response);
+                        this.username = username;
+                        return true;
+                    }
+                    else 
+                        return false;
+                }
+                catch (SocketTimeoutException e)
+                {
+                    //ack was lost
+                    this.username = "";
+                    this.token = -1;
+                    System.out.println("ACK timeout");
+                    return false;
+                }
+            }
+        }
+        catch(IOException e)
+        {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    public boolean open(String input)
+    {
+        try
+        {
+            if(connect())
+            {
+                Matcher m = openCommandPattern.matcher(input);
+                m.find();
+
+                String roomName = m.group(1);
+                String messageString = "open\n" + roomName + "\n" + this.token + "\n";
+                
+                ByteBuffer buff = ByteBuffer.wrap(messageString.getBytes());
+                InetSocketAddress addr = new InetSocketAddress (this.host,this.port);
+                datagramChannel.send(buff,addr);
+                
+                //wait for ack
+                try
+                {
+                    byte[] ack = receiveWithTimeout();
+                    String response = new String(ack);
+                    if (Message.isOk(response))
+                    {
+                        this.currentRoom = roomName;
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                catch (SocketTimeoutException e)
+                {
+                    //ack was lost
+                    System.out.println("ACK timeout");
+                    return false;
+                }
+            }
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+        return false;
     }
     public byte[] receiveWithTimeout() throws SocketTimeoutException,IOException
     {
@@ -259,69 +359,6 @@ public class Client extends Thread{
     public void sendMessage(String input)        
     {
         /*
-        try
-        {
-                if (isOpenCommand(input))
-                {
-                	if(userLoggedIn){
-	                    Matcher m = openCommandPattern.matcher(input);
-	                    m.find();
-	                    String roomName = m.group(1);
-                        String messageString = "open\n" + roomName +"\n";
-	                    System.out.println("is NULL?");
-	                    System.out.println(sendToServer==null);
-                        sendToServer.write(messageString.toCharArray(),0,messageString.length());
-	                    sendToServer.flush();
-	
-	                    char[] buff = new char[MAX_MESSAGE_SIZE];
-	                    int bytesRecv = receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
-                        String response = new String(buff,0,bytesRecv);
-	                    if (Message.isOk(response))
-	                    {
-	                        currentRoom = roomName;
-                            this.response = "opening " + roomName;
-	                    }
-	                    else
-	                    {
-	                    	System.out.println("ROOM WAS NOT FOUND");
-	                        this.response = "Room not found";
-	                    }
-                	}else{
-                		this.response = "You must log in first";
-                	}
-                }
-                else if (isConnectCommand(input))
-                {
-                    this.response = "wow nice connect";
-                }
-                else if (isRegisterCommand(input))
-                {
-                    this.response = "wow nice register";
-                }
-                else if (isLoginCommand(input))
-                {
-                    Matcher m = loginCommandPattern.matcher(input);
-                    m.find();
-                    String name = m.group(1);
-                    String messageString = "login\n"+name+"\n";
-                    sendToServer.write(messageString.toCharArray(),0,messageString.length());
-                    sendToServer.flush();
-
-                    char[] buff = new char[MAX_MESSAGE_SIZE];
-                    int bytesRecv = receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
-                    String response = new String(buff,0,bytesRecv);
-
-                    if (Message.isOk(response))
-                    {
-                        this.response = "Login Success";
-                        username = name;
-                        userLoggedIn = true;
-                    }
-                    else 
-                    {
-                        this.response = "Login unsuccessful";
-                    }
-                }
                 else if (isPollCommand(input) && roomOpened())
                 {
                     String messageString = "poll\nmessages\n"+currentRoom+"\n";
@@ -385,7 +422,7 @@ public class Client extends Thread{
      */
     public boolean loggedIn()
     {
-        return !username.equals("");
+        return (!username.equals("")) && (this.token != -1);
     }
     /** Has the user opened a room?
      * Naive implmentation
@@ -432,21 +469,45 @@ public class Client extends Thread{
                 if (isConnectCommand(input))
                 {
                     if (client.connect())
+                    {
                         System.out.println("Successfully Connected!");
-                    else
+                    }
+                   else
                     {
                         System.out.println("Could not connect to the network\nPlease check your connection settings");
                         System.exit(0);
                     }
                 }
-                if (isLoginCommand(input) && (client.datagramChannel != null))
+                else if (isLoginCommand(input) && (client.datagramChannel != null))
                 {
-                    if (client.login())
-                        System.out.println("login successfull");
+                    if (client.login(input))
+                    {
+                        System.out.println("login successful");
+                    }
+                    else 
+                    {
+                        System.out.println("login unsuccessful");
+                    }
                 }
-                if (isOpenCommand(input) && (client.datagramChannel != null))
+                else if (isOpenCommand(input) && (client.datagramChannel != null) && client.loggedIn())
                 {
                     //open
+                    if (client.open(input))
+                    {
+                        System.out.println("room opened successfully");
+                    }
+                    else
+                    {
+                        System.out.println("could not open room");
+                    }
+                }
+                else if (client.roomOpened())
+                {
+                    //not a command, send a message-send
+                }
+                else 
+                {
+                    //not a command, and no room opened
                 }
             }
             catch (IOException e)

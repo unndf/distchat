@@ -452,6 +452,12 @@ public class Message
         Matcher m = okPattern.matcher(message);
         return m.find();
     }
+    public static int okGetToken (String message)
+    {
+        Matcher m = okPattern.matcher(message);
+        m.find();
+        return Integer.parseInt(m.group(1));
+    }
     public static String okGetMessage (String message)
     {
         Matcher m  = okPattern.matcher(message);
