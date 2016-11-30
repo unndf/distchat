@@ -253,45 +253,80 @@ public class Client extends Thread{
     {
         try
         {
-            if(connect())
-            {
-                Matcher m = openCommandPattern.matcher(input);
-                m.find();
+            Matcher m = openCommandPattern.matcher(input);
+            m.find();
 
-                String roomName = m.group(1);
-                String messageString = "open\n" + roomName + "\n" + this.token + "\n";
-                
-                ByteBuffer buff = ByteBuffer.wrap(messageString.getBytes());
-                InetSocketAddress addr = new InetSocketAddress (this.host,this.port);
-                datagramChannel.send(buff,addr);
-                
-                //wait for ack
-                try
+            String roomName = m.group(1);
+            String messageString = "open\n" + roomName + "\n" + this.token + "\n";
+            
+            ByteBuffer buff = ByteBuffer.wrap(messageString.getBytes());
+            InetSocketAddress addr = new InetSocketAddress (this.host,this.port);
+            datagramChannel.send(buff,addr);
+            
+            //wait for ack
+            try
+            {
+                byte[] ack = receiveWithTimeout();
+                String response = new String(ack);
+                if (Message.isOk(response))
                 {
-                    byte[] ack = receiveWithTimeout();
-                    String response = new String(ack);
-                    if (Message.isOk(response))
-                    {
-                        this.currentRoom = roomName;
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
+                    this.currentRoom = roomName;
+                    return true;
                 }
-                catch (SocketTimeoutException e)
+                else
                 {
-                    //ack was lost
-                    System.out.println("ACK timeout");
                     return false;
                 }
+            }
+            catch (SocketTimeoutException e)
+            {
+                //ack was lost
+                System.out.println("ACK timeout");
+                return false;
             }
         }
         catch (IOException e)
         {
             e.printStackTrace();
         }
+        return false;
+    }
+    public boolean messageSend (String input)
+    {
+        try
+        {
+            String messageString = "message-send\n" + currentRoom + "\n" + username + "\n" + this.token + "\n" + input + "\n";
+            
+            ByteBuffer buff = ByteBuffer.wrap(messageString.getBytes());
+            InetSocketAddress addr = new InetSocketAddress (this.host,this.port);
+            datagramChannel.send(buff,addr);
+            
+            //wait for ack
+            try
+            {
+                byte[] ack = receiveWithTimeout();
+                String response = new String(ack);
+                if (Message.isOk(response))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            catch (SocketTimeoutException e)
+            {
+                //ack was lost
+                System.out.println("ACK timeout");
+                return false;
+            }
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+
         return false;
     }
     public byte[] receiveWithTimeout() throws SocketTimeoutException,IOException
@@ -504,6 +539,14 @@ public class Client extends Thread{
                 else if (client.roomOpened())
                 {
                     //not a command, send a message-send
+                    if (client.messageSend(input))
+                    {
+                        System.out.println("Message Sent!");
+                    }
+                    else
+                    {
+                        System.out.println("Message could not be sent");
+                    }
                 }
                 else 
                 {

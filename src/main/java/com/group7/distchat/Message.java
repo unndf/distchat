@@ -77,7 +77,7 @@ public class Message
     //init patterns
     static
     {
-        msgSendPattern = Pattern.compile("^message-send\\r?\\n([\\w-]+)\\r?\\n([\\w-]+)\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
+        msgSendPattern = Pattern.compile("^message-send\\r?\\n([\\w-]+)\\r?\\n([\\w-]+)\\r?\\n([\\d]+)\\r?\\n(.+)\\r?\\n",Pattern.DOTALL); //<usrname><><><token><message>
         registerPattern = Pattern.compile("^register\\r?\\n([\\w-]+)\\r?\\n",Pattern.DOTALL);
         openPattern = Pattern.compile("^open\\r?\\n([\\w-]+)\\r?\\n([\\d]+)\\r?\\n",Pattern.DOTALL);
         echoPattern = Pattern.compile("^echo\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
@@ -364,7 +364,13 @@ public class Message
     {
         Matcher m = msgSendPattern.matcher(message);
         m.find();
-        return m.group(3);
+        return m.group(4);
+    }
+    public static long messageSendGetToken (String message)
+    {
+        Matcher m = msgSendPattern.matcher(message);
+        m.find();
+        return Long.parseLong(m.group(3));
     }
     /**Method to determine if the message is of type register
      * @param String message

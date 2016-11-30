@@ -196,13 +196,17 @@ public class Distchat extends Thread
             }
             if (Message.isMessageSend(message.toString()))
             {
-                String username = userOpenList.get(message.id);
+                long token = Message.messageSendGetToken(message.toString());
+                String username = userOpenList.get(token);
                 String messageString = message.toString();
                 int chatId = -1;
                 String content = Message.messageSendGetContent(messageString);
                 String room = Message.messageSendGetRoom(messageString);
                 String nick = Message.messageSendGetNick(messageString);
                 content = "<" + nick + "> " + content;
+                String responseString;
+                responseString = "ok\nmessage received\n";
+
 
                 try 
                 {
@@ -210,7 +214,10 @@ public class Distchat extends Thread
                 }
                 catch (SQLException e)
                 {
+
                     e.printStackTrace();
+                    System.out.println("room: " + room);
+                    responseString = "error\nroom does not exist\n";
                 }
                 try
                 {
@@ -219,8 +226,10 @@ public class Distchat extends Thread
                 catch (SQLException e)
                 {
                     e.printStackTrace();
+                    responseString = "error\nmessage malformated\n";
                 }
-                //TODO: send something back instead of echo?
+                Message response = Message.getMessage(responseString);
+                return response;
             }
             if (Message.isPoll(message.toString()))
             {
