@@ -4,7 +4,7 @@
   <groupId>com.group7.distchat</groupId>
   <artifactId>distchat</artifactId>
   <packaging>jar</packaging>
-  <version>0.1-DEMO3</version>
+  <version>DEMO5</version>
   <name>distchat</name>
   <url>http://maven.apache.org</url>
   <dependencies>

@@ -16,11 +16,12 @@ public class Distchat extends Thread
 {
     private LinkedList<Message> inQueue  = new LinkedList<Message>();
     private LinkedList<Message> outQueue = new LinkedList<Message>();
-    //private Map<Integer,String> userList = new HashMap<Integer,String>();
-    private Map<Integer,String> userOpenList = new HashMap<Integer,String>(); //Map of clients to rooms open
-    private Map<Integer,Integer> userProgress = new HashMap<Integer,Integer>(); //Map of clients to the message id they've read up to
+    private Map<String,Long> loggedInUsers = new HashMap<String,Long>();
+    private Map<Long,String> userOpenList = new HashMap<Long,String>();      //Map of clients to rooms open
+    private Map<Long,Integer> userProgress = new HashMap<Long,Integer>();    //Map of clients to the message id they've read up to
     private Logger appLog = Logger.getLogger("com.group7.distchat.Distchat");
     private Server server = null;
+    private long currentToken = 0;
     private int port = -1;
     private boolean exit = false;
     private DBHandler dbhandler = null;
@@ -62,11 +63,6 @@ public class Distchat extends Thread
         //singleWorker
         QueueWorker worker = new QueueWorker();
         worker.start();
-        while(!exit)
-        {
-            //nothing lol
-        }
-
     }
     public static void main (String[] args)
     {
@@ -103,7 +99,7 @@ public class Distchat extends Thread
                     }
                     //get a response
                     Message response = getResponse(request);
-                    response.id = request.id; //just in case...
+                    response.address = request.address; //just in case...
                     synchronized (outQueue) {
                         outQueue.addLast(response);
                         outQueue.notify();
@@ -128,7 +124,13 @@ public class Distchat extends Thread
             //  associate username with socket id
             //  send ok
         	// Login Response
-            // TODO
+            if (Message.isConnect(message.toString()))
+            {
+                //send back ack
+                String responseString = "ok\nall clear\n";
+                ByteBuffer buff = ByteBuffer.wrap(responseString.getBytes());
+                return Message.getMessage(buff);
+            }
             if (Message.isLogin(message.toString()))
             {
                 String username = Message.loginGetUsername(message.toString());
@@ -147,7 +149,9 @@ public class Distchat extends Thread
                 }
                 if (userExists)
                 {
-                    responseString = "ok\nmsg Welcome, " + username + "\n";
+                    long token = genToken();
+                    loggedInUsers.put(username,token);
+                    responseString = "ok\n" + token + "\n";
                 }
                 else 
                 {
@@ -161,6 +165,7 @@ public class Distchat extends Thread
             //if type open
             if (Message.isOpen(message.toString()))
             {
+                long token = Message.openGetToken(message.toString());
                 String roomName = Message.openGetRoomName(message.toString());
                 String messageString = "";
                 boolean roomExists = false;
@@ -177,12 +182,8 @@ public class Distchat extends Thread
                 {
                     messageString = "ok\nOpen " + roomName + " Successful\n";
                     Message response = Message.getMessage(messageString);
-                    response.id = message.id;
 
-                    //TODO:**********IMPORTANT************************
-                    //TODO:TEMPORARY STOP GAP. WE SHOULD USE SOME SORT OF TOKEN SYSTEM
-                    userOpenList.put(response.id,roomName);
-                    //TODO:******************************************
+                    userOpenList.put(token,roomName);
                     return response;
                 }
                 else
@@ -195,13 +196,17 @@ public class Distchat extends Thread
             }
             if (Message.isMessageSend(message.toString()))
             {
-                String username = userOpenList.get(message.id);
+                long token = Message.messageSendGetToken(message.toString());
+                String username = userOpenList.get(token);
                 String messageString = message.toString();
                 int chatId = -1;
                 String content = Message.messageSendGetContent(messageString);
                 String room = Message.messageSendGetRoom(messageString);
                 String nick = Message.messageSendGetNick(messageString);
                 content = "<" + nick + "> " + content;
+                String responseString;
+                responseString = "ok\nmessage received\n";
+
 
                 try 
                 {
@@ -209,7 +214,10 @@ public class Distchat extends Thread
                 }
                 catch (SQLException e)
                 {
+
                     e.printStackTrace();
+                    System.out.println("room: " + room);
+                    responseString = "error\nroom does not exist\n";
                 }
                 try
                 {
@@ -218,8 +226,10 @@ public class Distchat extends Thread
                 catch (SQLException e)
                 {
                     e.printStackTrace();
+                    responseString = "error\nmessage malformated\n";
                 }
-                //TODO: send something back instead of echo?
+                Message response = Message.getMessage(responseString);
+                return response;
             }
             if (Message.isPoll(message.toString()))
             {
@@ -251,7 +261,7 @@ public class Distchat extends Thread
                 {
                     messageList = dbhandler.getMessagesAfter(chatId,mId);
                     int latestMessageId = dbhandler.getLatestMessageId(chatId);
-                    userProgress.put(id,latestMessageId);
+                    //userProgress.put(id,latestMessageId);
                 }
                 catch (SQLException e)
                 {
@@ -324,5 +334,9 @@ public class Distchat extends Thread
             	return Message.getMessage(buff);
             }*/
         }
+    }
+    public long genToken()
+    {
+        return  (this.currentToken++);
     }
 }

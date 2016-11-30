@@ -5,6 +5,9 @@ import java.util.regex.Matcher;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.io.*;
+import java.nio.*;
+import java.nio.channels.*;
+import java.net.*;
 
 public class Message
 {
@@ -66,6 +69,7 @@ public class Message
     public static Pattern logoutPattern;				//Logout is for leaving the chat room program
 
     public int id = M_INVALID;
+    public SocketAddress address;
     //message type
     private int type = M_INVALID;
     private String messageString = "";
@@ -73,9 +77,9 @@ public class Message
     //init patterns
     static
     {
-        msgSendPattern = Pattern.compile("^message-send\\r?\\n([\\w-]+)\\r?\\n([\\w-]+)\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
+        msgSendPattern = Pattern.compile("^message-send\\r?\\n([\\w-]+)\\r?\\n([\\w-]+)\\r?\\n([\\d]+)\\r?\\n(.+)\\r?\\n",Pattern.DOTALL); //<usrname><><><token><message>
         registerPattern = Pattern.compile("^register\\r?\\n([\\w-]+)\\r?\\n",Pattern.DOTALL);
-        openPattern = Pattern.compile("^open\\r?\\n([\\w-]+)\\r?\\n",Pattern.DOTALL);
+        openPattern = Pattern.compile("^open\\r?\\n([\\w-]+)\\r?\\n([\\d]+)\\r?\\n",Pattern.DOTALL);
         echoPattern = Pattern.compile("^echo\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
         errorPattern = Pattern.compile("^error\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
         quitPattern = Pattern.compile("^quit\\r?\\n\\r?\\n", Pattern.DOTALL);
@@ -360,7 +364,13 @@ public class Message
     {
         Matcher m = msgSendPattern.matcher(message);
         m.find();
-        return m.group(3);
+        return m.group(4);
+    }
+    public static long messageSendGetToken (String message)
+    {
+        Matcher m = msgSendPattern.matcher(message);
+        m.find();
+        return Long.parseLong(m.group(3));
     }
     /**Method to determine if the message is of type register
      * @param String message
@@ -386,6 +396,13 @@ public class Message
         Matcher m = openPattern.matcher(message);
         m.find();
         return m.group(1);
+    }
+    public static long openGetToken (String message)
+    {        
+        Matcher m = openPattern.matcher(message);
+        m.find();
+        return Long.parseLong(m.group(2));
+
     }
     /** Method to determine if the message is of type echo
      * @param String message
@@ -440,6 +457,12 @@ public class Message
     {
         Matcher m = okPattern.matcher(message);
         return m.find();
+    }
+    public static int okGetToken (String message)
+    {
+        Matcher m = okPattern.matcher(message);
+        m.find();
+        return Integer.parseInt(m.group(1));
     }
     public static String okGetMessage (String message)
     {
@@ -509,5 +532,12 @@ public class Message
     public String toString()
     {
         return messageString;
+    }
+    public ByteBuffer buffer()
+    {
+        String messageString = this.toString();
+        byte[] messageBytes = messageString.getBytes();
+        ByteBuffer buff = ByteBuffer.wrap(messageBytes);
+        return buff;
     }
 }

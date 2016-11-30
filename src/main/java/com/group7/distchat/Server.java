@@ -24,16 +24,13 @@ public class Server extends Thread{
     public static final int SELECT_TIMEOUT = 500; //milliseconds
     public static final String ENCODING = "UTF-8";
     public static final String LOGFILE = "server.log";
-
+    public static final String MULTCAST_ADDR = "225.4.4.6";
     private boolean exit = false;
     private int port = 0;
     private Logger serverLog = Logger.getLogger("com.group7.distchat.Server");
-    private ServerSocketChannel serverSocket = null;
-    private HashMap<Integer,ByteBuffer> recieveBuffers = null;
-    private HashMap<Integer,ByteBuffer> sendBuffers = null;
+    private DatagramChannel datagramChannel = null;
     private LinkedList<Message> inQueue = null;
     private LinkedList<Message> outQueue = null;
-    private int currentSocketId = 0;
 
     /**
      * This is the constructor to init a server object
@@ -55,190 +52,105 @@ public class Server extends Thread{
         //get a reference to the Message queues
         inQueue = inq;
         outQueue = outq;
-        recieveBuffers = new HashMap<Integer,ByteBuffer>();
-        sendBuffers = new HashMap<Integer,ByteBuffer>();
-
-        //start our worker
-        QueueWorker worker = new QueueWorker();
-        worker.start();
     }
     /**
      * Run Method for the Server
      * A selector is opened and register for accepting
      * The operation of the Server is as follows
      * while (true)
-     *  -Let QueueWorker(s) unload the outq into the outgoig buffers (sendBuffers)
+     *  -Let QueueWorker(s) unload the outq
      *  -select()
      *  -forall (sockets with operation)
      *      -if (operation is read)
      *          -read or continue reading
      *          if (hasMessage)
      *              -add message to incoming queue
-     *              -set interested operation to write
-     *      -if (operation is write)
-     *          -write or ccntinue writing
-     *          if (done writing)
-     *              -delete sendBuffer
-     *              -set interested operation to read
      */
     public void run ()
     {
-
         try
         {
-            //open a selector
-            Selector sockSelector = Selector.open();
+            //open a datagram channel
+            datagramChannel = DatagramChannel.open();
 
-            //open serverSocketChannel and bind to a port
-            serverSocket = ServerSocketChannel.open();
+            //make the datagramChannel  non-blocking
+            datagramChannel.configureBlocking(false);
             
-            //make the socketChannel  non-blocking
-            serverSocket.configureBlocking(false);
+            //get the address for our network adapter
             InetSocketAddress serverAddress = new InetSocketAddress(port);
+
+            //bind to local address
+            datagramChannel.bind(serverAddress);
             
-            serverSocket.socket().bind(serverAddress);
+            serverLog.log(Level.INFO, "Server started on: " + serverAddress);
 
+            //open selector
+            Selector selector = Selector.open();
 
-            //register socketChannel with the selector
-            serverSocket.register(sockSelector,
-                                        SelectionKey.OP_ACCEPT, 
-                                        //serverSocket.validOps(),
-                                         null //no attachments
-                                        );
+            //register datagramChannel for reading and writing
+            datagramChannel.register(selector,
+                    SelectionKey.OP_READ, //we dont care about OP_WRITE, UDP send() will always succeed given there is enough buffer space
+                    null //no attachments
+                    );
 
-            serverLog.log(Level.INFO, "Server started on port " + this.port);
-            
+            //start the OutqueueWorker
+            OutqueueWorker outqueueWorker = new OutqueueWorker();
+            outqueueWorker.start();
+
             while (!exit)
             {
-                int numKeys = sockSelector.select(SELECT_TIMEOUT);
+                //select
+                int numKeys = selector.select();
 
                 //something went horribly wrong
-                if (numKeys < 0) {
+                if (numKeys < 0)
+                {
                     System.exit(1);
                 }
-                Set<SelectionKey> readyKeys = sockSelector.selectedKeys();
-                Iterator<SelectionKey> readyIter = readyKeys.iterator();
 
+                //Iterate through the set of readyKeys
+                Set<SelectionKey> readyKeys = selector.selectedKeys();
+                Iterator<SelectionKey> readyIter = readyKeys.iterator();
                 while (readyIter.hasNext())
                 {
                     SelectionKey key = readyIter.next();
-
-                    //accept the new connection, make it non-blocking and register it with the selector
-                    if (key.isAcceptable() && key.isValid())
+                    //we have received a datagram
+                    //read (receive() the datagram)
+                    if (key.isReadable())
                     {
-                        SocketChannel clientSocket = serverSocket.accept();
-                        clientSocket.configureBlocking(false);
-                        int id = getSocketId();
-
-                        System.out.println("New Connection " + clientSocket.socket());
-                        //associate this new socket with it's own bytebuffer
-                        addSocketBuffer(id);
-                        //The sockets will be identified with the attachment
-                        //This will ALWAYS be an int
-                        clientSocket.register(sockSelector,
-                                              SelectionKey.OP_READ,
-                                              id
-                                             );
-                    }//key.isacceptable()
-
-                    //socket is ready to be read
-                    else if (key.isReadable() && key.isValid())
-                    {
-                        SocketChannel clientSocket = (SocketChannel) key.channel();
-
-                        //get the id and byteBuffer associated with this socket
-                        int id = (int) key.attachment();
-                        ByteBuffer buff = recieveBuffers.get(id);
-
+                        ByteBuffer buff = ByteBuffer.allocate(MAX_BUFFER_SIZE);
+                        SocketAddress addr = datagramChannel.receive(buff);
                         
-                        int bytesRecv = 0;
-                        //read
-                        try
+                        //we recieved a datagram!
+                        if (addr != null)
                         {
-                            bytesRecv = clientSocket.read(buff);
-                            //connection closed, cancel the key, remove the <id,ByteBuffer> pair from our byteBuffer dict
-                            if (bytesRecv < 0)
+                            serverLog.log(Level.INFO, "UDP Datagram received from: " + addr);
+                            
+                            if (Message.isMessage(buff))
                             {
-                                key.cancel();
-                                recieveBuffers.remove(id);
-                                serverLog.log(Level.INFO, "Client Disconnected "+ clientSocket);
-                            }
-                            else
-                            {
-                                if (Message.isMessage(buff))
+                                Message message = Message.getMessage(buff);
+                                
+                                //set our return address
+                                message.address = addr;
+                                
+                                //queue our message
+                                synchronized(inQueue)
                                 {
-                                    Message message = Message.getMessage (buff);
-                                    message.id = id;
-
-                                    synchronized(inQueue){
-                                        inQueue.addLast(message); //put recieved message on the queue
-                                        inQueue.notify(); //tell application we have a message
-                                        serverLog.log(Level.INFO, "Message Queued for application and notify()");
-                                    }
-                                    
-                                    key.interestOps(SelectionKey.OP_WRITE | SelectionKey.OP_READ); //we're only interested in writing to the socket now
-                                    //addSocketBuffer(id); //TODO: Assumes that we throw out the rest of the buffer
+                                    inQueue.addLast(message); //put recieved message on the queue
+                                    inQueue.notify(); //tell application we have a message
+                                    serverLog.log(Level.INFO, "Message from " + addr + " queued. Application thread notify()");
                                 }
-                                else
-                                {
-                                    //continue reading
-                                    //log that we recv. bytes
-                                    if(bytesRecv > 0)
-                                        serverLog.log(Level.INFO, "Partial Message (" + bytesRecv + ") bytes received");
-                                }
-
-                            }
-
-                        } 
-                        catch (IOException e){
-                            clientSocket.close();
-                            key.cancel();
-                            recieveBuffers.remove(id);
-                            serverLog.log(Level.INFO, "Client Disconnected "+ clientSocket);
-                        }
-
-                    }//key.isReadable()
-
-                    else if (key.isWritable() && key.isValid())
-                    {
-                        SocketChannel clientSocket = (SocketChannel) key.channel();
-
-                        int id = (int) key.attachment();
-
-                        //We have already have a buffer to write from
-                        //ignore it otherwise
-                        if(sendBuffers.containsKey(id)){
-                            ByteBuffer buff = sendBuffers.get(id); //get the buffer for the socket we're sending to
-
-                            int written = clientSocket.write(buff);
-                            serverLog.log(Level.INFO, written + " bytes written to " + clientSocket);
-
-                            //done writing, continue reading
-                            if (!buff.hasRemaining()){
-                                key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE); //interested in both reading and writing
-                                sendBuffers.remove(id);
                             }
                         }
-                    } //key.isWritable();
-
-                    readyIter.remove(); //remove current key
-                }
-            }
-        } catch (IOException e) {
+                    } //key.isReadble()
+                } //while(readyIter.hasNext())
+            } //while(!exit)
+            
+        } 
+        catch (IOException e) 
+        {
             e.printStackTrace();
         }
-    }
-    //TODO: This should be implemented as a stack and calls pop from the stack. This is to prevent the int wrap-around
-    private int getSocketId ()
-    {
-        if (this.currentSocketId == -1) this.currentSocketId = 0;
-
-        return ++(this.currentSocketId);
-    }
-    private void addSocketBuffer (int id)
-    {
-        ByteBuffer buff = ByteBuffer.allocateDirect(MAX_BUFFER_SIZE);
-        recieveBuffers.put(id,buff);
     }
     /**
      * @Deprecated only used for testing
@@ -251,9 +163,9 @@ public class Server extends Thread{
         Server mainServ = new Server(Integer.parseInt(args[0]),inq,outq);
         mainServ.start();
     }
-    public class QueueWorker extends Thread
+    public class OutqueueWorker extends Thread
     {
-        public QueueWorker()
+        public OutqueueWorker()
         {
             //stub
         }
@@ -276,23 +188,18 @@ public class Server extends Thread{
                 {
                     //echo every message back to the client
                     Message response = outQueue.pop();
-                    byte[] responseBytes = response.toString().getBytes();
-                    int id = response.id;
-                    ByteBuffer sendBuffer = null;
-                    
-                    //we are already writing from the sendBuffer
-                    //put the message back on the queue and handle it later
-                    
-                    if (sendBuffers.containsKey(id)){
-                        synchronized(outQueue){
-                            outQueue.addLast(response); //put it back .....
-                        }
-                        serverLog.log(Level.INFO, "socket with id " + id + " Already Writing. Try again later");
+                    SocketAddress addr = response.address;
+                    ByteBuffer responseBuffer = response.buffer();
+                    try
+                    {
+                        int bytesSent = datagramChannel.send(responseBuffer,addr);
+                        
+                        //no bytes sent, put response back on queue
+                        if (bytesSent == 0) outQueue.addLast(response);
                     }
-                    else{
-                        sendBuffer = ByteBuffer.wrap(responseBytes);
-                        sendBuffers.put(id,sendBuffer);
-                        serverLog.log(Level.INFO, "socket with id " + id + " ready to write");
+                    catch (IOException e)
+                    {
+                        e.printStackTrace();
                     }
                 }
             }

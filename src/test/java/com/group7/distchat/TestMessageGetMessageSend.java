@@ -10,14 +10,14 @@ public class TestMessageGetMessageSend
     public void isMessageSendString()
     {
         //ECHO regex works
-        String msgString = "message-send\n10\n11\nThis is a message\n"; //message send message
+        String msgString = "message-send\n10\n11\n1\nThis is a message\n"; //message send message
         assertTrue(Message.isMessageSend(msgString)); 
     }
 
     @Test
     public void isMessage()
     {
-        String msgString = "message-send\n10\n11\nThis is a message\n"; //message send message
+        String msgString = "message-send\n10\n11\n1\nThis is a message\n"; //message send message
         ByteBuffer buff = ByteBuffer.wrap(msgString.getBytes());
         assertTrue(Message.isMessage(buff));
     }
@@ -26,7 +26,7 @@ public class TestMessageGetMessageSend
     public void getMessage()
     {
         //put echo message into a byteBuffer
-        String msgString = "message-send\n10\n11\nThis is a message\n"; //message send message
+        String msgString = "message-send\n10\n11\n1\nThis is a message\n"; //message send message
         ByteBuffer buff = ByteBuffer.wrap(msgString.getBytes());
         
         //Buffer has a message
