@@ -24,7 +24,8 @@ public class Server extends Thread{
     public static final int SELECT_TIMEOUT = 500; //milliseconds
     public static final String ENCODING = "UTF-8";
     public static final String LOGFILE = "server.log";
-    public static final String MULTCAST_ADDR = "225.4.4.6";
+    public static final String MULTICAST_ADDR = "224.0.0.1";
+    public static final String NET_INTERFACE = "eth0"; //ethernet 0
     private boolean exit = false;
     private int port = 0;
     private Logger serverLog = Logger.getLogger("com.group7.distchat.Server");
@@ -70,8 +71,13 @@ public class Server extends Thread{
     {
         try
         {
+            //get the network interface we will be multicasting to
+            NetworkInterface networkInterface = NetworkInterface.getByName(NET_INTERFACE);
+            
             //open a datagram channel
-            datagramChannel = DatagramChannel.open();
+            datagramChannel = DatagramChannel.open()
+                .setOption(StandardSocketOptions.IP_MULTICAST_IF,networkInterface) //allow multicasting on this network interface
+                .setOption(StandardSocketOptions.SO_REUSEADDR,true); //allow all members of the group to bind to the multicast socket
 
             //make the datagramChannel  non-blocking
             datagramChannel.configureBlocking(false);
@@ -79,9 +85,16 @@ public class Server extends Thread{
             //get the address for our network adapter
             InetSocketAddress serverAddress = new InetSocketAddress(port);
 
-            //bind to local address
+           
+            //get the address of the multicast group
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDR);
+
+            //bind to local address (actually the "wildcard" address 0.0.0.0)
             datagramChannel.bind(serverAddress);
-            
+
+            //join the multicast group
+            datagramChannel.join(group,networkInterface);
+
             serverLog.log(Level.INFO, "Server started on: " + serverAddress);
 
             //open selector
@@ -193,6 +206,13 @@ public class Server extends Thread{
                     try
                     {
                         int bytesSent = datagramChannel.send(responseBuffer,addr);
+                        
+                        //MULTICAST TEST
+                        responseBuffer = response.buffer();
+                        addr = new InetSocketAddress(InetAddress.getByName(MULTICAST_ADDR),
+                                port);
+                        System.out.println(addr);
+                        int bytesSent2 = datagramChannel.send(responseBuffer,addr);
                         
                         //no bytes sent, put response back on queue
                         if (bytesSent == 0) outQueue.addLast(response);
