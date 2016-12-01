@@ -42,7 +42,7 @@ public class Client extends Thread{
     public String hostFile = "";
     public int port = -1;
     public Object timeoutLock = new Object();
-
+    public PollWorker worker = null;
     public String currentRoom = "";
     public String username = "";
     public String response = "";
@@ -468,8 +468,48 @@ public class Client extends Thread{
     }
     public class PollWorker extends Thread
     {
+        public Client client  = null;
         public void run()
         {
+            while (true)
+            {
+
+                try
+                {
+                    String messageString = "poll\nmessages\n"+ token + "\n";
+                    ByteBuffer buff = ByteBuffer.wrap(messageString.getBytes());
+                    InetSocketAddress addr = new InetSocketAddress (host,port);
+
+                    datagramChannel.send(buff,addr);
+
+                    //wait for ack
+                    try
+                    {
+                        byte[] ack = receiveWithTimeout();
+                        String response = new String(ack);
+
+                        System.out.println(Message.packageGetMessages(response));
+                    }
+                    catch (SocketTimeoutException e)
+                    {
+                        //do nothing
+                    }
+                }
+                catch(IOException e)
+                {
+                    e.printStackTrace();
+                }
+                synchronized (this)
+                {
+                    try
+                    {
+                        wait(5000);
+                    }
+                    catch (InterruptedException e)
+                    {
+                    }
+                }
+            }
         }
     }
     public void run()
@@ -480,6 +520,11 @@ public class Client extends Thread{
         //  start(pollWorker room)
         //if (!leave room)
         //  kill(pollWorker room)
+    }
+    public void startWorker()
+    {
+        this.worker = new PollWorker();
+        worker.start();
     }
     public static void main(String[]args)
     {
@@ -526,10 +571,12 @@ public class Client extends Thread{
                 }
                 else if (isOpenCommand(input) && (client.datagramChannel != null) && client.loggedIn())
                 {
+                    client.startWorker();
                     //open
                     if (client.open(input))
                     {
                         System.out.println("room opened successfully");
+                        //start poll worker
                     }
                     else
                     {

@@ -480,16 +480,22 @@ public class Message
         Matcher m = pollPattern.matcher(message);
         return m.find();
     }
-    public static String pollGetRoom(String message)
+    public static Long pollGetToken(String message)
     {
         Matcher m = pollPattern.matcher(message);
         m.find();
-        return m.group(2);
+        return Long.parseLong(m.group(2));
     }
     public static boolean isPackage(String message)
     {
         Matcher m = packagePattern.matcher(message);
         return m.matches();
+    }
+    public static String packageGetMessages(String message)
+    {
+        Matcher m = packagePattern.matcher(message);
+        m.matches();
+        return m.group(1);
     }
     public static boolean isAccept(String message)
     {

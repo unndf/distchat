@@ -291,11 +291,11 @@ public class Distchat extends Thread
                 String messageString = message.toString();
                 ArrayList<String> messageList = null;
                 String messagePackage = "";
-                int id = message.id;
                 int chatId = -1;
                 int mId = 0; //basecase, we havent polled yet so start polling from the first message
 
-                String room = Message.pollGetRoom(messageString);
+                Long token = Message.pollGetToken(messageString);
+                String room = userOpenList.get(token);
                 //get chatId from the room name
                 try
                 {
@@ -307,16 +307,16 @@ public class Distchat extends Thread
                     //TODO
                 }
                 
-                if (userProgress.containsKey(id))
+                if (userProgress.containsKey(token))
                 {
-                    mId = userProgress.get(id);
+                    mId = userProgress.get(token);
                 }
                 //attempt to retrive messages from that room from the message id after the one defined in our map
                 try
                 {
                     messageList = dbhandler.getMessagesAfter(chatId,mId);
                     int latestMessageId = dbhandler.getLatestMessageId(chatId);
-                    //userProgress.put(id,latestMessageId);
+                    userProgress.put(token,latestMessageId);
                 }
                 catch (SQLException e)
                 {
@@ -326,8 +326,16 @@ public class Distchat extends Thread
                 {
                     String responseString = "ok\nNo new Messages\n";
                     Message response = Message.getMessage(responseString);
-                    response.id = message.id;
-                    //return response;
+
+                    response.address = message.address; //just in case...
+                    synchronized (outQueue) {
+                        outQueue.addLast(response);
+                        outQueue.notify();
+                    }
+                    appLog.log(Level.INFO, "Application queued response message\n" + "********************\n" + response.toString() + "\n********************\n" );
+
+
+
                 }
                 else //there are some new messages in the room
                 {
@@ -336,8 +344,15 @@ public class Distchat extends Thread
                         responseString = responseString + messageList.get(i) + "\n"; 
                    
                     Message response = Message.getMessage(responseString);
-                    response.id = message.id;
-                    //return response;
+
+                    response.address = message.address; //just in case...
+                    synchronized (outQueue) {
+                        outQueue.addLast(response);
+                        outQueue.notify();
+                    }
+                    appLog.log(Level.INFO, "Application queued response message\n" + "********************\n" + response.toString() + "\n********************\n" );
+
+
                 }
             }
             // Quit/Logout Response
