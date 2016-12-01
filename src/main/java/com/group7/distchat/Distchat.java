@@ -16,6 +16,7 @@ public class Distchat extends Thread
 {
     private LinkedList<Message> inQueue  = new LinkedList<Message>();
     private LinkedList<Message> outQueue = new LinkedList<Message>();
+    private String networkInterface = "eth0";
     private Map<String,Long> loggedInUsers = new HashMap<String,Long>();
     private Map<Long,String> userOpenList = new HashMap<Long,String>();      //Map of clients to rooms open
     private Map<Long,Integer> userProgress = new HashMap<Long,Integer>();    //Map of clients to the message id they've read up to
@@ -38,9 +39,10 @@ public class Distchat extends Thread
      * @see Server
      * @see Message
      */
-    public Distchat(int port)
+    public Distchat(int port, String networkInterface)
     {
         this.port = port;
+        this.networkInterface = networkInterface;
         try {
             FileHandler fh = new FileHandler (LOGFILE);
             fh.setFormatter(new SimpleFormatter());
@@ -55,7 +57,7 @@ public class Distchat extends Thread
     public void run ()
     {
 
-        server = new Server(port,inQueue, outQueue);
+        server = new Server(port,networkInterface,inQueue, outQueue);
         //start the server thread
         server.start();
 
@@ -64,9 +66,11 @@ public class Distchat extends Thread
         QueueWorker worker = new QueueWorker();
         worker.start();
     }
-    public static void main (String[] args)
+    public static void main (String[] args) throws SQLException
     {
-        Distchat app = new Distchat(Integer.parseInt(args[0]));
+        Distchat app = new Distchat(Integer.parseInt(args[0]),args[1]);
+        
+        //start main application
         app.start();
     }
     public class QueueWorker extends Thread
@@ -98,17 +102,12 @@ public class Distchat extends Thread
                         appLog.log(Level.INFO, "Application recieved message:\n" + "********************\n" + request + "\n*******************\n");
                     }
                     //get a response
-                    Message response = getResponse(request);
-                    response.address = request.address; //just in case...
-                    synchronized (outQueue) {
-                        outQueue.addLast(response);
-                        outQueue.notify();
-                    }
-                    appLog.log(Level.INFO, "Application queued response message\n" + "********************\n" + response.toString() + "\n********************\n" );
+                    //getReponse queues the message(s) itself now
+                    getResponse(request);
                 }
             }
         }
-        public Message getResponse (Message message)
+        public void getResponse (Message message)
         {
         	/*
         	 * We need reponses for:
@@ -129,7 +128,14 @@ public class Distchat extends Thread
                 //send back ack
                 String responseString = "ok\nall clear\n";
                 ByteBuffer buff = ByteBuffer.wrap(responseString.getBytes());
-                return Message.getMessage(buff);
+                Message response = Message.getMessage(buff);
+
+                response.address = message.address; //return to sender
+                synchronized (outQueue) {
+                    outQueue.addLast(response);
+                    outQueue.notify();
+                }
+                appLog.log(Level.INFO, "Application queued response message\n" + "********************\n" + response.toString() + "\n********************\n" );
             }
             if (Message.isLogin(message.toString()))
             {
@@ -159,7 +165,15 @@ public class Distchat extends Thread
                 }
                 Message response = null;
                 ByteBuffer buff = ByteBuffer.wrap(responseString.getBytes());
-                return Message.getMessage(buff);
+                response = Message.getMessage(buff);
+
+                response.address = message.address; //just in case...
+                synchronized (outQueue) {
+                    outQueue.addLast(response);
+                    outQueue.notify();
+                }
+                appLog.log(Level.INFO, "Application queued response message\n" + "********************\n" + response.toString() + "\n********************\n" );
+
             } //end Message.isLogin()
 
             //if type open
@@ -184,14 +198,28 @@ public class Distchat extends Thread
                     Message response = Message.getMessage(messageString);
 
                     userOpenList.put(token,roomName);
-                    return response;
+                    
+                    response.address = message.address; //just in case...
+                    synchronized (outQueue) {
+                        outQueue.addLast(response);
+                        outQueue.notify();
+                    }
+                    appLog.log(Level.INFO, "Application queued response message\n" + "********************\n" + response.toString() + "\n********************\n" );
+
+
                 }
                 else
                 {
                     messageString = "error\nRoom Doesn't Exist\n";
                     Message response = Message.getMessage(messageString);
                     response.id = message.id;
-                    return response;
+
+                    response.address = message.address; //just in case...
+                    synchronized (outQueue) {
+                        outQueue.addLast(response);
+                        outQueue.notify();
+                    }
+                    appLog.log(Level.INFO, "Application queued response message\n" + "********************\n" + response.toString() + "\n********************\n" );
                 }
             }
             if (Message.isMessageSend(message.toString()))
@@ -229,7 +257,14 @@ public class Distchat extends Thread
                     responseString = "error\nmessage malformated\n";
                 }
                 Message response = Message.getMessage(responseString);
-                return response;
+
+                response.address = message.address; //just in case...
+                synchronized (outQueue) {
+                    outQueue.addLast(response);
+                    outQueue.notify();
+                }
+                appLog.log(Level.INFO, "Application queued response message\n" + "********************\n" + response.toString() + "\n********************\n" );
+
             }
             if (Message.isPoll(message.toString()))
             {
@@ -272,7 +307,7 @@ public class Distchat extends Thread
                     String responseString = "ok\nNo new Messages\n";
                     Message response = Message.getMessage(responseString);
                     response.id = message.id;
-                    return response;
+                    //return response;
                 }
                 else //there are some new messages in the room
                 {
@@ -282,7 +317,7 @@ public class Distchat extends Thread
                    
                     Message response = Message.getMessage(responseString);
                     response.id = message.id;
-                    return response;
+                    //return response;
                 }
             }
             // Quit/Logout Response
@@ -307,7 +342,7 @@ public class Distchat extends Thread
             		return Message.getMessage(buff);
             	}*/ 
                 //TODO: Echo for now
-                return message;
+                //return message;
             	
             }
             // Echo
@@ -318,21 +353,8 @@ public class Distchat extends Thread
             	String responseString = "echo " + username + ": " + message.toString() + "\n";
             	ByteBuffer buff = ByteBuffer.wrap(responseString.getBytes());
             	return Message.getMessage(buff);*/
-                return message;
+                //return message;
             }
-            //Base case just echo....
-            //probably should ret null eventually
-            return message;
-            // No type match
-            // Return error
-            /*
-            else 
-            {
-            	Message response = null;
-            	String responseString = "error message type does not match\n";
-            	ByteBuffer buff = ByteBuffer.wrap(responseString.getBytes());
-            	return Message.getMessage(buff);
-            }*/
         }
     }
     public long genToken()

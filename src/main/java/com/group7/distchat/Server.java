@@ -24,14 +24,14 @@ public class Server extends Thread{
     public static final int SELECT_TIMEOUT = 500; //milliseconds
     public static final String ENCODING = "UTF-8";
     public static final String LOGFILE = "server.log";
-    public static final String MULTICAST_ADDR = "224.0.0.1";
-    public static final String NET_INTERFACE = "eth0"; //ethernet 0
+    public static final String MULTICAST_ADDR = "224.1.60.1";
     private boolean exit = false;
     private int port = 0;
     private Logger serverLog = Logger.getLogger("com.group7.distchat.Server");
     private DatagramChannel datagramChannel = null;
     private LinkedList<Message> inQueue = null;
     private LinkedList<Message> outQueue = null;
+    public final String NET_INTERFACE; //ethernet 0
 
     /**
      * This is the constructor to init a server object
@@ -40,9 +40,10 @@ public class Server extends Thread{
      * @param LinkedList<Message> outq This will be treated as a queue used for outgoing messages (to clients)
      * @return Nothing
      */
-    Server(int port, LinkedList<Message> inq, LinkedList<Message> outq)
+    Server(int port, String networkInterface, LinkedList<Message> inq, LinkedList<Message> outq)
     {
         this.port = port;
+        this.NET_INTERFACE = networkInterface;
         try {
             FileHandler fh = new FileHandler (LOGFILE);
             fh.setFormatter(new SimpleFormatter());
@@ -173,7 +174,7 @@ public class Server extends Thread{
     {
         LinkedList<Message> inq = new LinkedList<>();
         LinkedList<Message> outq = new LinkedList<>();
-        Server mainServ = new Server(Integer.parseInt(args[0]),inq,outq);
+        Server mainServ = new Server(Integer.parseInt(args[0]),args[1],inq,outq);
         mainServ.start();
     }
     public class OutqueueWorker extends Thread
@@ -206,13 +207,6 @@ public class Server extends Thread{
                     try
                     {
                         int bytesSent = datagramChannel.send(responseBuffer,addr);
-                        
-                        //MULTICAST TEST
-                        responseBuffer = response.buffer();
-                        addr = new InetSocketAddress(InetAddress.getByName(MULTICAST_ADDR),
-                                port);
-                        System.out.println(addr);
-                        int bytesSent2 = datagramChannel.send(responseBuffer,addr);
                         
                         //no bytes sent, put response back on queue
                         if (bytesSent == 0) outQueue.addLast(response);

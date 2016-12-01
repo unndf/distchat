@@ -7,7 +7,7 @@ import java.util.Collection;
 public class DBHandler
 {
     //TODO: DONT USE THESE, THESE SHOULD BE PARAMETERIZED OR SOMETHING
-    public static final String DB_LOCATION = "jdbc:h2:~/distchat";
+    public static final String DB_LOCATION = "jdbc:h2:./distchat";
     public static final String DB_USERNAME = "sa";
     public static final String DB_PASSWORD = "";
 
