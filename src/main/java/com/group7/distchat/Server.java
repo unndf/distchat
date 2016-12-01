@@ -26,7 +26,7 @@ public class Server extends Thread{
     public static final String LOGFILE = "server.log";
     public static final String MULTICAST_ADDR = "224.1.60.1";
     private boolean exit = false;
-    private int port = 0;
+    public int port = 0;
     private Logger serverLog = Logger.getLogger("com.group7.distchat.Server");
     private DatagramChannel datagramChannel = null;
     private LinkedList<Message> inQueue = null;

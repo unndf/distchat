@@ -93,7 +93,7 @@ public class Message
         packagePattern = Pattern.compile("^package\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
         acceptPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
         infoPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
-        replicaConnectPattern = Pattern.compile("^replica connect\\r?\\n",Pattern.DOTALL);
+        replicaConnectPattern = Pattern.compile("^replica-message-send\\r?\\n(.*)\\r?\\n",Pattern.DOTALL);
         okPattern = Pattern.compile("^ok\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
         welcomePattern = Pattern.compile("^Welcome, \\r?\\n(.+)\\r\\n", Pattern.DOTALL);
         exitPattern = Pattern.compile("^exit\\r\\n", Pattern.DOTALL);

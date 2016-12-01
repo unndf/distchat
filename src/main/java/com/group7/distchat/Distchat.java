@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.io.*;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.sql.SQLException;
 
@@ -235,7 +236,6 @@ public class Distchat extends Thread
                 String responseString;
                 responseString = "ok\nmessage received\n";
 
-
                 try 
                 {
                     chatId = dbhandler.getChatId(room);
@@ -265,6 +265,26 @@ public class Distchat extends Thread
                 }
                 appLog.log(Level.INFO, "Application queued response message\n" + "********************\n" + response.toString() + "\n********************\n" );
 
+
+                if (Message.isOk(responseString))
+                {
+                    try
+                    {
+                        String replicaResponseString = "replica-message-send\n" + chatId + "\n" + content + "\n";
+                        SocketAddress addr = new InetSocketAddress(InetAddress.getByName(Server.MULTICAST_ADDR),server.port);
+                        Message replicaResponse = Message.getMessage(replicaResponseString);
+                        replicaResponse.address = addr;
+                        synchronized (outQueue) {
+                            outQueue.addLast(replicaResponse);
+                            outQueue.notify();
+                        }
+                        appLog.log(Level.INFO, "Application queued response message\n" + "********************\n" + replicaResponse.toString() + "\n********************\n" );
+                    }
+                    catch (UnknownHostException e)
+                    {
+                        //this is ok...
+                    }
+                }
             }
             if (Message.isPoll(message.toString()))
             {
