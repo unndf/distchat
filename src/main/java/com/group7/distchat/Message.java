@@ -62,7 +62,7 @@ public class Message
     public static Pattern packagePattern;
     public static Pattern acceptPattern;
     public static Pattern infoPattern;
-    public static Pattern replicaConnectPattern;
+    public static Pattern replicaMessageSendPattern;
     public static Pattern okPattern;
     public static Pattern welcomePattern;
     public static Pattern exitPattern;				//Exit is for exiting a chat room, so a user can join a different one. 
@@ -93,7 +93,7 @@ public class Message
         packagePattern = Pattern.compile("^package\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
         acceptPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
         infoPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
-        replicaConnectPattern = Pattern.compile("^replica-message-send\\r?\\n(.*)\\r?\\n",Pattern.DOTALL);
+        replicaMessageSendPattern = Pattern.compile("^replica-message-send\\r?\\n([0-9]+)\\r?\\n(.*)\\r?\\n",Pattern.DOTALL);
         okPattern = Pattern.compile("^ok\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
         welcomePattern = Pattern.compile("^Welcome, \\r?\\n(.+)\\r\\n", Pattern.DOTALL);
         exitPattern = Pattern.compile("^exit\\r\\n", Pattern.DOTALL);
@@ -139,7 +139,7 @@ public class Message
                 || isPackage(messageString)
                 || isAccept(messageString)
                 || isInfo(messageString)
-                || isReplicaConnect(messageString)
+                || isReplicaMessageSend(messageString)
                 || isOk(messageString)
                 || isWelcome(messageString)
                 || isExit(messageString)
@@ -270,8 +270,8 @@ public class Message
                 m.find();
                 retMessageString = m.group(0);
             } 
-            else if (isReplicaConnect(messageString)){
-                Matcher m = replicaConnectPattern.matcher(messageString);
+            else if (isReplicaMessageSend(messageString)){
+                Matcher m = replicaMessageSendPattern.matcher(messageString);
                 m.find();
                 retMessageString = m.group(0);
             }
@@ -332,7 +332,7 @@ public class Message
         else if (isPackage(message))	 return M_PACKAGE;
         else if (isAccept(message))	 	 return M_ACCEPT;
         else if (isInfo(message))	 	 return M_INFO;
-        else if (isReplicaConnect(message))  	 return M_REPLICA_CONNECT;
+        else if (isReplicaMessageSend(message))  	 return M_REPLICA_CONNECT;
         else if (isWelcome(message))  	 return M_WELCOME;
         else if (isExit(message))  	 	 return M_EXIT;
         else if (isLogout(message))  	 return M_LOGOUT;
@@ -507,9 +507,9 @@ public class Message
         Matcher m = infoPattern.matcher(message);
         return m.find();
     }
-    public static boolean isReplicaConnect(String message)
+    public static boolean isReplicaMessageSend(String message)
     {
-        Matcher m = replicaConnectPattern.matcher(message);
+        Matcher m = replicaMessageSendPattern.matcher(message);
         return m.find();
     }
     public static boolean isWelcome(String message)

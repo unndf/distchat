@@ -60,83 +60,6 @@ public class Client extends Thread{
     public Client (String hostFile)
     {
         this.hostFile = hostFile;
-/*        try
-        {
-            //open a new datagramChannel
-            datagramChannel = DatagramChannel.open();
-            host = "localhost";
-            port = 9191;
-            InetSocketAddress addr = new InetSocketAddress(host,port);
-            ByteBuffer message = ByteBuffer.wrap("echo\nwewlad\n".getBytes());
-            datagramChannel.send(message,addr);
-
-            ByteBuffer buff = ByteBuffer.allocate(2048);
-            SocketAddress address = datagramChannel.receive(buff);
-            Message m = Message.getMessage(buff);
-            System.out.println("WE RECEIVED A MESSAGE:\n" + m.toString());
-            
-            message = ByteBuffer.wrap("echo\nwewlad\n".getBytes());
-            datagramChannel.send(message,addr);
-            address = datagramChannel.receive(buff);
-            m = Message.getMessage(buff);
-            System.out.println(m.toString()); 
-            
-            message = ByteBuffer.wrap("login\ndev\n".getBytes());
-            datagramChannel.send(message,addr);
-            address = datagramChannel.receive(buff);
-            m = Message.getMessage(buff);
-            System.out.println(m.toString());
-
-            message = ByteBuffer.wrap("open\ndemo-room\n0\n".getBytes());
-            datagramChannel.send(message,addr);
-            address = datagramChannel.receive(buff);
-            m = Message.getMessage(buff);
-            System.out.println(m.toString());
-*/
-            /*
-            message = ByteBuffer.wrap("login\ndev\n".getBytes());
-            datagramChannel.send(message,addr);
-               address = datagramChannel.receive(buff);
-            Message m = Message.getMessage(buff);
-            System.out.println(m.toString());         
-            message = ByteBuffer.wrap("login\ndev\n".getBytes());
-            datagramChannel.send(message,addr);
-            address = datagramChannel.receive(buff);
-            Message m = Message.getMessage(buff);
-            System.out.println(m.toString());
-            address = datagramChannel.receive(buff);
-            m = Message.getMessage(buff);
-            System.out.println("WE RECEIVED A MESSAGE:\n" + m.toString());*/
-/*        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        } 
-/*
-        /*
-        serverList.add("162.246.156.110");
-    	serverList.add("localhost");
-    	
-        this.host = host;
-        this.port = port;
-
-        Iterator<String> iter = serverList.iterator();
-        while(iter.hasNext()){
-        	 //try to connect 
-        	String serverHost = iter.next();
-            try {
-
-            	Socket socket = new Socket();
-            	socket.connect(new InetSocketAddress(serverHost, port), 5000);
-    			receiveFromServer = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-    	        sendToServer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-    	        break;
-    		} catch (IOException e) {
-    			System.out.println(String.format("Could not connect to server %s", serverHost));
-    			System.out.println("Attempting to connect to next server...");
-    		}
-        }
-        */
     }
     /**Attempt to "connect" to a server in our list of known_hosts.
      * Uses fall-through, it will try to connect to the first one in the list then if it can't it will try the next
@@ -393,64 +316,59 @@ public class Client extends Thread{
     }
     public void sendMessage(String input)        
     {
-        /*
-                else if (isPollCommand(input) && roomOpened())
-                {
-                    String messageString = "poll\nmessages\n"+currentRoom+"\n";
-                    sendToServer.write(messageString.toCharArray(),0,messageString.length());
-                    sendToServer.flush();
-
-                    char[] buff = new char[MAX_MESSAGE_SIZE];
-                    int bytesRecv = receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
-                    String response = new String(buff,0,bytesRecv);
-
-                    if (Message.isPackage(response))
-                    {
-                        this.response = "new messages: \n" + response.toString() + "\n";
-                    }
-                    else 
-                    {
-                        this.response = "No new Messages";
-                    }
-
-                }
-                else
-                {
-                    //if the user is logged in and has a room opened then send a message-send
-                    //echo otherwise
-                    if(loggedIn() && roomOpened())
-                    {
-                        String messageString = "message-send\n" + currentRoom + "\n" + username + "\n" + input + "\n";
-                        sendToServer.write(messageString.toCharArray(),0,messageString.length());
-                        sendToServer.flush();
-                        
-                        char[] buff = new char[MAX_MESSAGE_SIZE];
-                        int bytesRecv = receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
-                        String response = new String(buff,0,bytesRecv);
-                        System.out.println("Message from server: ");
-                        System.out.println(response);
-                        this.response = response;
-                    }
-                    else
-                    {
-                        String messageString = "echo\n" + input + "\n";
-                        sendToServer.write(messageString.toCharArray(),0,messageString.length());
-                        sendToServer.flush();
-                        
-                        char[] buff = new char[MAX_MESSAGE_SIZE];
-                        int bytesRecv = receiveFromServer.read(buff,0,MAX_MESSAGE_SIZE);
-                        String response = new String(buff,0,bytesRecv);
-                        System.out.println("Message from server: ");
-                        System.out.println(response);
-                        this.response = response;
-                    }
-                }//end else
-            } */ //end try 
-    /*
-            catch (IOException e)
+        if (isConnectCommand(input))
+        {
+            if (connect())
             {
-                e.printStackTrace(); //TODO: We should actually handle it....
-            }*/
+                System.out.println("Successfully Connected!");
+            }
+           else
+            {
+                System.out.println("Could not connect to the network\nPlease check your connection settings");
+                System.exit(0);
+            }
+        }
+        else if (isLoginCommand(input) && (datagramChannel != null))
+        {
+            if (login(input))
+            {
+                System.out.println("login successful");
+            }
+            else 
+            {
+                System.out.println("login unsuccessful");
+            }
+        }
+        else if (isOpenCommand(input) && (datagramChannel != null) && loggedIn())
+        {
+            startWorker();
+            //open
+            if (open(input))
+            {
+                System.out.println("room opened successfully");
+                //start poll worker
+            }
+            else
+            {
+                System.out.println("could not open room");
+            }
+        }
+        else if (roomOpened())
+        {
+            //not a command, send a message-send
+            if (messageSend(input))
+            {
+                System.out.println("Message Sent!");
+            }
+            else
+            {
+                System.out.println("Message could not be sent");
+            }
+        }
+        else 
+        {
+            //not a command, and no room opened
+        }
     }
     /** Is the user currently logged in?
      * Naive implementation
@@ -488,7 +406,8 @@ public class Client extends Thread{
                         byte[] ack = receiveWithTimeout();
                         String response = new String(ack);
 
-                        System.out.println(Message.packageGetMessages(response));
+                        System.out.println(response);
+                        //System.out.println(Message.packageGetMessages(response));
                     }
                     catch (SocketTimeoutException e)
                     {
@@ -503,7 +422,7 @@ public class Client extends Thread{
                 {
                     try
                     {
-                        wait(5000);
+                        wait(2000); //timeout of two seconds for poll()
                     }
                     catch (InterruptedException e)
                     {
@@ -541,64 +460,13 @@ public class Client extends Thread{
         
         //get input from stdin
         BufferedReader console = new BufferedReader(new InputStreamReader(System.in));
+        String input = "";
         while (true)
         {
             try
             {
-                String input = console.readLine();
-                if (isConnectCommand(input))
-                {
-                    if (client.connect())
-                    {
-                        System.out.println("Successfully Connected!");
-                    }
-                   else
-                    {
-                        System.out.println("Could not connect to the network\nPlease check your connection settings");
-                        System.exit(0);
-                    }
-                }
-                else if (isLoginCommand(input) && (client.datagramChannel != null))
-                {
-                    if (client.login(input))
-                    {
-                        System.out.println("login successful");
-                    }
-                    else 
-                    {
-                        System.out.println("login unsuccessful");
-                    }
-                }
-                else if (isOpenCommand(input) && (client.datagramChannel != null) && client.loggedIn())
-                {
-                    client.startWorker();
-                    //open
-                    if (client.open(input))
-                    {
-                        System.out.println("room opened successfully");
-                        //start poll worker
-                    }
-                    else
-                    {
-                        System.out.println("could not open room");
-                    }
-                }
-                else if (client.roomOpened())
-                {
-                    //not a command, send a message-send
-                    if (client.messageSend(input))
-                    {
-                        System.out.println("Message Sent!");
-                    }
-                    else
-                    {
-                        System.out.println("Message could not be sent");
-                    }
-                }
-                else 
-                {
-                    //not a command, and no room opened
-                }
+                input = console.readLine();
+                client.sendMessage(input);
             }
             catch (IOException e)
             {

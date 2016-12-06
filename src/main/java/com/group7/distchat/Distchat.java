@@ -355,6 +355,9 @@ public class Distchat extends Thread
 
                 }
             }
+            if (Message.isReplicaMessageSend(message.toString()))
+            {
+            }
             // Quit/Logout Response
             if (Message.isQuit(message.toString()))
             {

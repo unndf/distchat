@@ -7,6 +7,13 @@ if [ "$#" -ne 2 ]; then
     exit
 fi
 
+if [ ! -e h2-1.4.193.jar ] 
+then
+    echo "h2 not found"
+    echo "Downloading h2 from http://repo2.maven.org/maven2/com/h2database/h2/1.4.193/"
+    wget "http://repo2.maven.org/maven2/com/h2database/h2/1.4.193/h2-1.4.193.jar"
+fi
+
 if [ -e distchat.mv.db ]
     then
         echo "Database already exists"
