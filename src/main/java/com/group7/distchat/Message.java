@@ -90,7 +90,7 @@ public class Message
         loginPattern = Pattern.compile("^login\\r?\\n([\\w-]+)\\r?\\n", Pattern.DOTALL);
         connectPattern = Pattern.compile("^connect\\r?\\n",Pattern.DOTALL);
         pollPattern = Pattern.compile("^poll\\r?\\n(info|users|rooms|messages)\\r?\\n(.*)\\r?\\n",Pattern.DOTALL);
-        packagePattern = Pattern.compile("^package\\r?\\n(.+)\\r?\\n",Pattern.DOTALL);
+        packagePattern = Pattern.compile("^package\\r?\\n(.+)\\r?\\n\\r?\\n",Pattern.DOTALL);
         acceptPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
         infoPattern = Pattern.compile("^error\\r?\\n(.+)\\n",Pattern.DOTALL);
         replicaMessageSendPattern = Pattern.compile("^replica-message-send\\r?\\n([0-9]+)\\r?\\n(.*)\\r?\\n",Pattern.DOTALL);
@@ -489,12 +489,12 @@ public class Message
     public static boolean isPackage(String message)
     {
         Matcher m = packagePattern.matcher(message);
-        return m.matches();
+        return m.find();
     }
     public static String packageGetMessages(String message)
     {
         Matcher m = packagePattern.matcher(message);
-        m.matches();
+        m.find();
         return m.group(1);
     }
     public static boolean isAccept(String message)
@@ -511,6 +511,19 @@ public class Message
     {
         Matcher m = replicaMessageSendPattern.matcher(message);
         return m.find();
+    }
+    public static int replicaMessageSendGetChatId(String message)
+    {
+        Matcher m = replicaMessageSendPattern.matcher(message);
+        m.find();
+        return Integer.parseInt(m.group(1));
+    }
+
+    public static String replicaMessageSendGetContent(String message)
+    {
+        Matcher m = replicaMessageSendPattern.matcher(message);
+        m.find();
+        return m.group(2);
     }
     public static boolean isWelcome(String message)
     {

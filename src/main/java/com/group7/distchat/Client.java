@@ -17,7 +17,6 @@ import java.util.regex.Matcher;
 public class Client extends Thread{
 
     //STATIC VARS
-    public static Pattern ipWithPortPattern;
     public static Pattern openCommandPattern;
     public static Pattern registerCommandPattern;
     public static Pattern connectCommandPattern;
@@ -27,7 +26,6 @@ public class Client extends Thread{
     public static Pattern hostsPattern;
     static 
     {
-        ipWithPortPattern = Pattern.compile("(\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d\\.\\d?\\d?\\d):(\\d?\\d?\\d?\\d?\\d)"); //NOTE: ONLY IPV4 IS SUPPORTED
         openCommandPattern = Pattern.compile("!open\\s+([\\w-]+)");
         connectCommandPattern = Pattern.compile("!connect");
         registerCommandPattern = Pattern.compile("!register\\s+([\\w-]+)");
@@ -41,7 +39,6 @@ public class Client extends Thread{
     public String host = "";
     public String hostFile = "";
     public int port = -1;
-    public Object timeoutLock = new Object();
     public PollWorker worker = null;
     public String currentRoom = "";
     public String username = "";
@@ -49,14 +46,21 @@ public class Client extends Thread{
     public int token = -1;
     public LinkedList<String> outputsToDisplay = new LinkedList<>(); //list of outputs that need to be displayed
     public HashMap<String,PollWorker> pollWorkerList = new HashMap<>(); //list of workers currently active
-    private Socket socket = null;
-    private BufferedReader receiveFromServer = null;
-    private BufferedWriter sendToServer = null;
-    private boolean userLoggedIn = false;
     ArrayList<String> serverList = new ArrayList<>();
     
     public static final int MAX_MESSAGE_SIZE = 8196;
     public static final int TIMEOUT = 5000; //5 second timeouts
+    
+    //VERY IMPORTANT TERMINAL EYECANDY
+    //aka. Does your terminal REALLY not support 256-bit color in the year TWO-THOUSAND-AND-SIXTEEN
+    public static final String MAKE_RED     = ((char)27) + "[31m";
+    public static final String MAKE_GREEN   = ((char)27) + "[32m";
+    public static final String MAKE_ORANGE  = ((char)27) + "[33m";
+    public static final String MAKE_BLUE    = ((char)27) + "[34m";
+    public static final String MAKE_PURPLE  = ((char)27) + "[35m";
+    public static final String MAKE_CYAN    = ((char)27) + "[36m";
+    public static final String MAKE_GREY    = ((char)27) + "[37m";
+    
     public Client (String hostFile)
     {
         this.hostFile = hostFile;
@@ -74,7 +78,7 @@ public class Client extends Thread{
             String hostString = freader.readLine();
             while (hostString != null)
             {
-                System.out.println("Attemping to connect to " + hostString + "...");
+                printStatus("Attemping to connect to " + hostString + "...");
                 Matcher m = hostsPattern.matcher(hostString);
                 String message = "connect\n";
                 ByteBuffer buff = null;
@@ -104,11 +108,11 @@ public class Client extends Thread{
                     } 
                     catch (SocketTimeoutException e)
                     {
-                        System.out.println("Couldnt not connect to " + hostString);
+                        printError("Couldn't not connect to " + hostString);
                     }
                     catch (UnresolvedAddressException e)
                     {
-                        System.out.println("Couldnt not connect to " + hostString);
+                        printError("Couldn't not connect to " + hostString);
                     }
                 }   
                 hostString = freader.readLine();
@@ -161,7 +165,7 @@ public class Client extends Thread{
                     //ack was lost
                     this.username = "";
                     this.token = -1;
-                    System.out.println("ACK timeout");
+                    printError("ACK timeout");
                     return false;
                 }
             }
@@ -204,7 +208,7 @@ public class Client extends Thread{
             catch (SocketTimeoutException e)
             {
                 //ack was lost
-                System.out.println("ACK timeout");
+                printError("ACK timeout");
                 return false;
             }
         }
@@ -241,7 +245,7 @@ public class Client extends Thread{
             catch (SocketTimeoutException e)
             {
                 //ack was lost
-                System.out.println("ACK timeout");
+                printError("ACK timeout");
                 return false;
             }
         }
@@ -320,11 +324,11 @@ public class Client extends Thread{
         {
             if (connect())
             {
-                System.out.println("Successfully Connected!");
+                printSuccess("Successfully Connected!");
             }
            else
             {
-                System.out.println("Could not connect to the network\nPlease check your connection settings");
+                printError("Could not connect to the network\nPlease check your connection settings");
                 System.exit(0);
             }
         }
@@ -332,11 +336,11 @@ public class Client extends Thread{
         {
             if (login(input))
             {
-                System.out.println("login successful");
+                printSuccess("login successful");
             }
             else 
             {
-                System.out.println("login unsuccessful");
+                printError("login unsuccessful");
             }
         }
         else if (isOpenCommand(input) && (datagramChannel != null) && loggedIn())
@@ -345,12 +349,12 @@ public class Client extends Thread{
             //open
             if (open(input))
             {
-                System.out.println("room opened successfully");
+                printSuccess("room opened successfully");
                 //start poll worker
             }
             else
             {
-                System.out.println("could not open room");
+                printError("could not open room");
             }
         }
         else if (roomOpened())
@@ -358,11 +362,11 @@ public class Client extends Thread{
             //not a command, send a message-send
             if (messageSend(input))
             {
-                System.out.println("Message Sent!");
+                printSuccess("Message Sent!");
             }
             else
             {
-                System.out.println("Message could not be sent");
+                printError("Message could not be sent");
             }
         }
         else 
@@ -372,6 +376,7 @@ public class Client extends Thread{
     }
     /** Is the user currently logged in?
      * Naive implementation
+     * Just checks to see if a username has been defined and the token is a valid value
      */
     public boolean loggedIn()
     {
@@ -406,8 +411,13 @@ public class Client extends Thread{
                         byte[] ack = receiveWithTimeout();
                         String response = new String(ack);
 
-                        System.out.println(response);
-                        //System.out.println(Message.packageGetMessages(response));
+                        //System.out.println(response);
+                        if (Message.isPackage(response))
+                        {
+                            print("\n" + Message.packageGetMessages(response));
+                            //terminal eyecandy
+                            System.out.print(">>>> ");
+                        }
                     }
                     catch (SocketTimeoutException e)
                     {
@@ -456,8 +466,6 @@ public class Client extends Thread{
         //      queue approiate message
         //
         
-        //start workers TODO
-        
         //get input from stdin
         BufferedReader console = new BufferedReader(new InputStreamReader(System.in));
         String input = "";
@@ -465,6 +473,7 @@ public class Client extends Thread{
         {
             try
             {
+                System.out.print(">>>> ");
                 input = console.readLine();
                 client.sendMessage(input);
             }
@@ -473,5 +482,25 @@ public class Client extends Thread{
                 e.printStackTrace();
             }
         }
+    }
+    //Eyecandy....
+    public static void printStatus(String i)
+    {
+        System.out.println(MAKE_ORANGE+i+MAKE_GREY);
+    }
+    //Eyecandy....
+    public static void printError(String i)
+    {
+        System.out.println(MAKE_RED+i+MAKE_GREY);
+    }
+    //Eyecandy....
+    public static void printSuccess(String i)
+    {
+        System.out.println(MAKE_GREEN+i+MAKE_GREY);
+    }
+    //Eyecandy....
+    public static void print(String i)
+    {
+        System.out.println(MAKE_CYAN+i+MAKE_GREY);
     }
 }

@@ -286,6 +286,20 @@ public class Distchat extends Thread
                     }
                 }
             }
+            if (Message.isReplicaMessageSend(message.toString()))
+            {
+                int chatId = Message.replicaMessageSendGetChatId(message.toString());
+                String content = Message.replicaMessageSendGetContent(message.toString());
+                try
+                {
+                    dbhandler.addMessage(chatId,content);
+                }
+                catch (SQLException e)
+                {
+                    e.printStackTrace();
+                }
+                appLog.log(Level.INFO, "Multicast message received from " + message.address + " successfully added to DB" );
+            }
             if (Message.isPoll(message.toString()))
             {
                 String messageString = message.toString();
@@ -341,7 +355,8 @@ public class Distchat extends Thread
                 {
                     String responseString = "package\n";
                     for (int i=0;i<messageList.size();i++)
-                        responseString = responseString + messageList.get(i) + "\n"; 
+                        responseString = responseString + messageList.get(i) + "\n";
+                    responseString = responseString + "\n";
                    
                     Message response = Message.getMessage(responseString);
 

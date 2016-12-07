@@ -52,7 +52,7 @@ public class ClientGuiWindow {
 		
 		// Make instance of client
 
-        client = new Client("localhost", 9999);
+        //client = new Client("localhost", 9999);
 		
 		frame = new JFrame();
 		frame.setBounds(100, 100, 463, 548);

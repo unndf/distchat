@@ -32,7 +32,7 @@ fi
 
 #start application
 echo "Starting Distchat"
-java  -cp "*" com.group7.distchat.Distchat $1 $2
+java  -cp "*:target/*" com.group7.distchat.Distchat $1 $2
 
 echo "SIGKILL h2..."
 kill -n 9 $DB_PID #SIGKILL DB

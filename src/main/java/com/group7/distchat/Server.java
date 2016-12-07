@@ -78,6 +78,7 @@ public class Server extends Thread{
             //open a datagram channel
             datagramChannel = DatagramChannel.open()
                 .setOption(StandardSocketOptions.IP_MULTICAST_IF,networkInterface) //allow multicasting on this network interface
+                //.setOption(StandardSocketOptions.IP_MULTICAST_LOOP,false) //throw out multicast datagrams from ourselves
                 .setOption(StandardSocketOptions.SO_REUSEADDR,true); //allow all members of the group to bind to the multicast socket
 
             //make the datagramChannel  non-blocking
@@ -85,7 +86,6 @@ public class Server extends Thread{
             
             //get the address for our network adapter
             InetSocketAddress serverAddress = new InetSocketAddress(port);
-
            
             //get the address of the multicast group
             InetAddress group = InetAddress.getByName(MULTICAST_ADDR);
