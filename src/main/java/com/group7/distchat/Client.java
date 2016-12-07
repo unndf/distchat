@@ -14,7 +14,10 @@ import java.util.Iterator;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-public class Client extends Thread{
+/** Client
+ * Implements the functionality of the reference Distchat client
+ */
+public class Client{
 
     //STATIC VARS
     public static Pattern openCommandPattern;
@@ -24,9 +27,11 @@ public class Client extends Thread{
     public static Pattern loginCommandPattern;
     public static Pattern pollCommandPattern;
     public static Pattern hostsPattern;
+    public static Pattern helpCommandPattern;
     static 
     {
         openCommandPattern = Pattern.compile("!open\\s+([\\w-]+)");
+        helpCommandPattern = Pattern.compile("!help");
         connectCommandPattern = Pattern.compile("!connect");
         registerCommandPattern = Pattern.compile("!register\\s+([\\w-]+)");
         leaveCommandPattern = Pattern.compile("!leave\\s+([\\w-]+)");
@@ -36,20 +41,20 @@ public class Client extends Thread{
     }
 
     public DatagramChannel datagramChannel = null;
-    public String host = "";
-    public String hostFile = "";
-    public int port = -1;
+    public String host = ""; //address of the host the client is currently communicating with
+    public String hostFile = ""; 
+    public int port = -1; //port of the host the client is currently communicating with
     public PollWorker worker = null;
-    public String currentRoom = "";
-    public String username = "";
-    public String response = "";
-    public int token = -1;
+    public String currentRoom = ""; //name of the room the user has opened
+    public String username = ""; //current username
+    public String displayString = ""; 
+    public int token = -1; //current token TODO: should actually be a long.........
     public LinkedList<String> outputsToDisplay = new LinkedList<>(); //list of outputs that need to be displayed
     public HashMap<String,PollWorker> pollWorkerList = new HashMap<>(); //list of workers currently active
     ArrayList<String> serverList = new ArrayList<>();
     
     public static final int MAX_MESSAGE_SIZE = 8196;
-    public static final int TIMEOUT = 5000; //5 second timeouts
+    public static final int TIMEOUT = 5000; //5 second timeout for acks.
     
     //VERY IMPORTANT TERMINAL EYECANDY
     //aka. Does your terminal REALLY not support 256-bit color in the year TWO-THOUSAND-AND-SIXTEEN
@@ -60,6 +65,21 @@ public class Client extends Thread{
     public static final String MAKE_PURPLE  = ((char)27) + "[35m";
     public static final String MAKE_CYAN    = ((char)27) + "[36m";
     public static final String MAKE_GREY    = ((char)27) + "[37m";
+
+    static final String INIT_MESSAGE =
+     "\n\n\n"+
+     "/$$$$$$$ /$$$$$$ /$$$$$$ /$$$$$$$$/$$$$$$ /$$   /$$ /$$$$$$ /$$$$$$$$\n"+
+     "| $$__  $|_  $$_//$$__  $|__  $$__/$$__  $| $$  | $$/$$__  $|__  $$__/\n"+
+     "| $$  \\ $$ | $$ | $$  \\__/  | $$ | $$  \\__| $$  | $| $$  \\ $$  | $$\n"+   
+     "| $$  | $$ | $$ |  $$$$$$   | $$ | $$     | $$$$$$$| $$$$$$$$  | $$\n"+   
+     "| $$  | $$ | $$  \\____  $$  | $$ | $$     | $$__  $| $$__  $$  | $$\n"+   
+     "| $$  | $$ | $$  /$$  \\ $$  | $$ | $$    $| $$  | $| $$  | $$  | $$\n"+   
+     "| $$$$$$$//$$$$$|  $$$$$$/  | $$ |  $$$$$$| $$  | $| $$  | $$  | $$\n"+   
+     "|_______/|______/\\______/   |__/  \\______/|__/  |__|__/  |__/  |__/\n" +
+     "\nType \"!help\" for a list of commands\n\n";
+    
+    public static final String HELP_MESSAGE = 
+    "Commands:\n!connect\n!login <username>\n!open <room>\n!help\n";
     
     public Client (String hostFile)
     {
@@ -274,6 +294,16 @@ public class Client extends Thread{
         //return the byte[]
         return packet.getData();
     }
+    /** Detects if the user input is a helpCommand
+     * @param command
+     * @return boolean
+     */
+    public static boolean isHelpCommand (String command)
+    {
+        Matcher m = helpCommandPattern.matcher(command);
+        return m.find();
+    }
+    
     /** Detects if the user input is an openCommand
      * @param command
      * @return boolean
@@ -320,15 +350,22 @@ public class Client extends Thread{
     }
     public void sendMessage(String input)        
     {
+        if (isHelpCommand(input))
+        {
+            printError(HELP_MESSAGE);
+            updateDisplay(HELP_MESSAGE);
+        }
         if (isConnectCommand(input))
         {
             if (connect())
             {
                 printSuccess("Successfully Connected!");
+                updateDisplay("Successfully Connected!\n");
             }
            else
             {
                 printError("Could not connect to the network\nPlease check your connection settings");
+                updateDisplay("Could not connect to the network\nPlease check your connection settings");
                 System.exit(0);
             }
         }
@@ -337,10 +374,12 @@ public class Client extends Thread{
             if (login(input))
             {
                 printSuccess("login successful");
+                updateDisplay("login successful\n");
             }
             else 
             {
                 printError("login unsuccessful");
+                updateDisplay("login unsuccessful\n");
             }
         }
         else if (isOpenCommand(input) && (datagramChannel != null) && loggedIn())
@@ -350,11 +389,13 @@ public class Client extends Thread{
             if (open(input))
             {
                 printSuccess("room opened successfully");
+                updateDisplay("room opened successfully\n");
                 //start poll worker
             }
             else
             {
                 printError("could not open room");
+                updateDisplay("could not open room\n");
             }
         }
         else if (roomOpened())
@@ -367,11 +408,25 @@ public class Client extends Thread{
             else
             {
                 printError("Message could not be sent");
+                updateDisplay("Message could not be sent\n");
+                //we didn't receive an ack
+                printStatus("Attemping reconnect...");
+                updateDisplay("Attemping reconnect...\n");
+                //reconnect
+                sendMessage("!connect");
+                //re-login
+                sendMessage("!login " + username);
+                //re-open
+                sendMessage("!open " + currentRoom);
+                //restart worker
+                killWorker();
+                startWorker();
             }
         }
         else 
         {
             //not a command, and no room opened
+            printError("Not a command.\nSee !help");
         }
     }
     /** Is the user currently logged in?
@@ -392,9 +447,10 @@ public class Client extends Thread{
     public class PollWorker extends Thread
     {
         public Client client  = null;
+        public boolean exit = false;
         public void run()
         {
-            while (true)
+            while (!exit)
             {
 
                 try
@@ -415,6 +471,7 @@ public class Client extends Thread{
                         if (Message.isPackage(response))
                         {
                             print("\n" + Message.packageGetMessages(response));
+                            updateDisplay(Message.packageGetMessages(response) + "\n");
                             //terminal eyecandy
                             System.out.print(">>>> ");
                         }
@@ -441,32 +498,32 @@ public class Client extends Thread{
             }
         }
     }
-    public void run()
-    {
-        //try to connect to a server in the list of knownhosts
-        //fall through the list
-        //if (!join room)
-        //  start(pollWorker room)
-        //if (!leave room)
-        //  kill(pollWorker room)
-    }
+    /** Start the Polling Worker
+     */
     public void startWorker()
     {
         this.worker = new PollWorker();
         worker.start();
     }
+    /** Kill the polling worker
+     */
+    public void killWorker()
+    {
+        this.worker.exit = true;
+    }
     public static void main(String[]args)
     {
         Client client = new Client("known_hosts");
-        //start workers
+        //start worker(s)
         //while true
         //  get input
         //  validate
         //  if valid command
         //      queue approiate message
-        //
         
         //get input from stdin
+        //print intro message
+        printSuccess(INIT_MESSAGE);
         BufferedReader console = new BufferedReader(new InputStreamReader(System.in));
         String input = "";
         while (true)
@@ -482,6 +539,15 @@ public class Client extends Thread{
                 e.printStackTrace();
             }
         }
+    }
+    public void updateDisplay(String s)
+    {
+        if (displayString.length() > 1000){
+            //cut roughly in half
+            displayString = displayString.substring(500,displayString.length());
+        }
+        //append new content
+        displayString = displayString + s;
     }
     //Eyecandy....
     public static void printStatus(String i)

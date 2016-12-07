@@ -7,7 +7,7 @@ import javax.swing.JTextField;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JTextPane;
-import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
 import java.awt.Color;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -52,8 +52,10 @@ public class ClientGuiWindow {
 		
 		// Make instance of client
 
-        //client = new Client("localhost", 9999);
-		
+        //Make a client
+        client = new Client("known_hosts");
+		UpdateWorker worker = new UpdateWorker();
+        worker.start();
 		frame = new JFrame();
 		frame.setBounds(100, 100, 463, 548);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -69,9 +71,9 @@ public class ClientGuiWindow {
 		btnSend.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				System.out.println("Button Pressed");
-				// Call send message method
+				
+                // Call send message method
 				sendToClient(textField.getText());
-				//client.sendMessage(textField.getText());		//Send message will be added in Client
 				textField.setText("");
 				updateTextPane();
 				
@@ -93,13 +95,11 @@ public class ClientGuiWindow {
 		textPane.setBounds(19, 75, 411, 405);
 		frame.getContentPane().add(textPane);
 		
-		JScrollBar scrollBar = new JScrollBar();
-		scrollBar.setBackground(Color.LIGHT_GRAY);
-		scrollBar.setForeground(Color.DARK_GRAY);
-		scrollBar.setBounds(429, 42, 15, 439);
-		frame.getContentPane().add(scrollBar);
+		JScrollPane scrollPane = new JScrollPane(textPane);
+		scrollPane.setBounds(19, 75, 411, 405);
+		frame.getContentPane().add(scrollPane);
 		
-		JLabel lblNewLabel = new JLabel("Chit-Chat Messaging!");
+		JLabel lblNewLabel = new JLabel("Distchat!");
 		lblNewLabel.setForeground(Color.RED);
 		lblNewLabel.setFont(new Font("DIN Condensed", Font.BOLD, 24));
 		lblNewLabel.setBounds(153, 6, 166, 42);
@@ -109,8 +109,26 @@ public class ClientGuiWindow {
 		client.sendMessage(textToSend);
 	}
     private void updateTextPane(){
-        String newText = textPane.getText() + "\n" + client.response;
+        String newText = client.displayString;
         System.out.println(newText);
         textPane.setText(newText);
+    }
+    public class UpdateWorker extends Thread
+    {
+        public void run()
+        {
+            while (true)
+            {
+                try
+                {
+                    sleep(2000); //same timeout as acks..
+                    updateTextPane();
+                }
+                catch (InterruptedException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 }
