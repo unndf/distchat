@@ -1,0 +1,59 @@
+./runcli.sh
+!connect
+!login 2373374U
+!open tech
+dozer: What model is it?
+dozer: I might have one here
+dozer: I don't have one here, but I did run debian on that same model with absolutely no problems
+for a few months
+dozer: Yeah, what graphics does it have, the one I used had intel graphics in a Xeon E3-something
+dozer: Ah, I see. Are you able to get a live environment with a command line up?
+dozer: Does it have integrated graphics, so you could try that instead?
+jm_: Amazon reviews say it works "pretty well" with CentOS 6.3, jessie kernel isn't that old, is it?
+dozer: Okay. Seeing as this isn't a particularly high end card, do you by any chance have any spare cards around that you could use instead?
+Or if not use, just test to see if it's even related to the graphics card
+dozer: I know there's some AMD graphics firmware that's required in certain cases. I'll try to find out whether this is included in the firmware image
+dozer: It seems some AMD cards require firmware-linux-nonfree, which is included in the firmware image
+dozer: Are you experiencing the same problems both with the graphical and curses installers?
+dozer: You could try booting into live and running the installer from there
+I don't remember the name of the executable, let me see. I have a live environment running in the other room
+dozer: it's "debian-installer-launcher"
+dozer: It'll run in the same framebuffer as the console did, so if live works well, then this should be the same
+dozer: try booting with consoleblank=0
+that should prevent the screen from turning off after a while
+dozer: if that works you should probably add that to the kernel parameters in grub after installation, too
+Yeah, if running from the live environment you could maybe try setterm -blank 0 -powerdown 0 -powersave off
+Ouroboros: If running the default installer it won't be using X
+dozer: Oh boy
+try without consoleblank=0, then and instead run that command inside
+Ouroboros: can you tell me the names of two packages, one that does and one that doesn't and I might be able to tell you
+Would hardly be blanking, it should happen only afte 10 minutes of inactivity
+This card only has a DMS-59 plug doesn't it
+dozer: Do you have another computer in the same network?
+dozer: If you run from the live environment, you may be able to start sshd and run the installation from there
+dozer: Yup, the newt installer should run just fine inside a terminal emulator on your other computer
+Speaking of that I really wonder why I didn't do this while I was setting up a small NFS server at home yesterday...
+dozer: Ouroboros is right
+it has sudo rights, so just do sudo debian-installer-launcher, or sudo su ...
+Yeah, it sets up your first interface automatically
+hmm, interesting, gonna do a port scan on the live environment i have running here in the office
+it seems login with password is disabled though, don't know if you were able to log in, dozer?
+dozer: Yeah, of course you can change the settings, though
+Ouroboros: They did, but it was easily changed the same way you would on an installed system
+so I was able to log in now
+dozer: no, ssh user@hostname
+and then the password
+probably replace hostname with the IP address
+jm_: to install debian, the screen goes blank and won't wake when he uses the installer, even if launched from the console
+jm_: is there any advantage to this as opposed to just using ssh in the live environment?
+dozer: If you get authentication failure (publickey) let me know and I'll guide you through changing the ssh settings. of course this requires half a minute of access with the keyboard and display...
+Ouroboros: true, i could probably do it without with vim
+user<return>live<return>sudo su<return>vi /etc/ssh/sshd<tab><return>/PasswordAuth<return>3fndwayes<escape>:wq<return>systemctl restart sshd<return>
+that would enable password auth from the login prompt, no need for a display
+Ouroboros: some of the init scripts are kept for backwards compatibility, but in Jessie systemd is default
+works really well, i use it on almost all of my computers, except my raspberry pi that sits behind my TV with some XBMC distro
+Jessie, that is
+im getting lunch so i'll be away for a short while
+dozer: are you using a live distro with or without a GUI?
+dozer: might be easier to use the live image without a GUI, if you lose the display and have to use only keyboard
+pdo_fn14: do you have gstreamer?

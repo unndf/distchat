@@ -1,0 +1,22 @@
+./runcli.sh
+!connect
+!login cool-dude
+!open tech
+hi guys
+Where i can find linux-kernel for 4.6.0-0.bpo.1-amd64
+I cant find anywhere
+Event tried adding test repos
+i need exactly headers for the 4.6.0-0.bpo.1-amd64
+meh
+deleted there too
+strange
+gotta dig on changing kernel in iso image then
+I have livecd
+usb
+i need to install there virtualbox
+so i need kernel files
+by phrase "install there virtual box" i mean booting up and installing there virtualbox.deb installer and running files from persistent
+there is just links to download newer versions
+oh i got it
+thanks a lot
+you saved my time :)

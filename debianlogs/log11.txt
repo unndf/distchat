@@ -1,0 +1,13 @@
+./runcli.sh
+!connect
+!login anon
+!open tech
+Hi there, i wud like to go for Linode 4GB plan. some doubts - is cpanel available with linode?
+ok. IS the Linode manager free for all the linode users?
+ohh.. so is there any other alternative tools available with linode for what cpanel does
+fine. how reliable is linode, were ther any shutdowns any recently?
+how reliable is linode, were ther any shutdowns recently?
+okay. and one more. is there any chat support system to address any issues related to the server?
+ho ho...cool. I thought that yhis is some community chat forum for linode users
+okay. thank you guys for the information. i'll most probably be a linode user soon.
+bye

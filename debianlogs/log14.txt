@@ -1,0 +1,16 @@
+./runcli.sh
+!connect
+!login hito
+!open tech
+I think you're right
+I'm showing a caker post at 2:28 PM
+It's 2:21 ET
+Maybe caker is just ahead of us
+DrJ: Your post shows 3:21 PM here.. I'm in CT
+Yes, but it's adjusting... incorrectly somehow
+The time apparently changes after a reload
+which is... odd
+Uh oh... here we go again...
+Oh, nm.... "It Came From Freenode" this time, apparently
+I have no entry from you in my buffer, dating back to yesterday.
+These are the only lines you've uttered in 24 hours... so whatever satisfies the requirement :P

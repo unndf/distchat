@@ -1,0 +1,17 @@
+./runcli.sh
+!connect
+!login gates
+!open tech
+only if you buy and install it yourself
+the linode manager is free, but it doesn't actually manage the *insides* of a VPS
+(other than perhaps showing graphs/statistics via Longview)
+linode only provides the server itself, really
+mostly just scheduled reboots for patching up Xen
+(like https://status.linode.com/incidents/6lqznlfwlv1r)
+can't remember any unplanned reboot
+besides, new VPSes run on KVM anyways
+you're chatting on it
+well, I guess it's not technically official – they prefer tickets for that
+but there *is* a bunch of Linode staff here
+officially, it is
+unless someone with a hat speaks ↑↑

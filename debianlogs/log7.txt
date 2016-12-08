@@ -1,0 +1,7 @@
+./runcli.sh
+!connect
+!login eve
+!open tech
+Hi all. I really need to install the Ubuntu fglrx .deb in Jessie. How can i accomplish this?
+Ouroboros: it tells me the file is not a debian format...
+It is the closest format to debian that AMD gives out. The source package, which I tried to download to build and install the module, fails download.

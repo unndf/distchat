@@ -1,0 +1,18 @@
+./runcli.sh
+!connect
+!login gil
+!open tech
+Worth noting I believe it adjusts time based on your own system
+Have you checked to make sure -your- system isn't out of sync?
+Oh nevermind DrJ is saying the same thing
+I thought he was saying it looked normal for him
+Judging from the fact that DrJ's time states 3:21PM to me, I'm guessing the forum is set to a GMT-4 for some reason
+either that or it handled DST poorly
+Or apparently it handles no timezones properly, the timezone dropdown in the board settings is blank
+lol
+mcintosh: Still looks broke to me, board looks to be defaulting TZ w/ DST with no config options
+mcintosh: Did you guys modify the theme? Check your language/en_US/common.php file, make sure the TZ declarations are set :P
+or is it language/en/common.php, I forget
+been a while since I messed with phpBB3
+mcintosh: nah I'm cool, I don't use the forum much lol
+also I guess I should be amused that a freenode netsplit just hung my client up worse than that 600~ privmsg spam net did lol

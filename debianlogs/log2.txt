@@ -1,0 +1,17 @@
+./runcli.sh
+!connect
+!login bill
+!open tech
+sorry if this is the wrong chat, but what does debian use for a driver manager?
+a package like synaptic, but for getting drivers your your hardware
+themill, im trying to find drivers for my graphics card
+a r9 380x
+no, an r9 380 sorry
+thank you
+as long as it doesent melt the card, il manage
+my audio isent working, and i cant figure out why, iv checked synaptic and i should have what i need but i cant hear a thing
+oh.. "audio software included, volume control not included.." guess i dident look to closely at the fine print that came with my debian ISO
+why is there 2 software packages for audio? why not just have one package that has everything you need?
+trying to get a dell 1130 laser printer to work, iv tried downloading a driver from gitub, but debian still thinks it doesent have a driver installed, what do i do now?
+heres the link to the driver iv tried installing https://github.com/cookiengineer/printer-driver-dell1130/releases
+can someone help me with getting my printer to work?

@@ -1,0 +1,9 @@
+./runcli.sh
+!connect
+!login jennifer
+!open tech
+Hmmm... I seem to have an extra printer called "print" - its description is my postcode
+Not listed in cups...
+Looks like it may be the printer itself serving in
+it*
+Hmmm... turns out turning off mDNS stops my printer serving AirPrint. Latest version also does Google Cloud but that has a specific checkbox.

@@ -1,0 +1,69 @@
+./runcli.sh
+!connect
+!login joe
+!open tech
+Anyone encountered a random black screen during installation of debian on dell towers?
+dell precision t1700 mini tower
+@Echoz Tried several boot options (vga=normal fb=false got me the furthest) and debian releases.. Weird thing is that ubuntu and lubuntu full CD works and installs just fine. Not Debian however - neither full CD nor netinst for several releases. ubuntu minimal install also fails. Yes, thats also strange - the computer had been running Debian, although a corrupt one, for some time
+Echoz: Ati firepro something
+Echoz: Sorry, thats AMD FirePro 2270
+Echoz: Yep, works just fine with live CD
+Echoz: I believe it only has the AMD graphics
+Also tried testing; both the regular and the one w/ extra firmware.
+Echoz: No, unfortunately.
+Echoz: Thank you!
+Im baffled over how the previous guy got Debian on this machine...
+Echoz: If by cursers installer you mean the graphical installer then yes - both. Really random where the screen looses its signal. However vga=normal and fb=false as boot parameters gets me the furhtest. Right up until installing grub, which is one of the final steps.
+Ouroboros: Yep, my thoughts as well
+jm_: Sometimes it seems like the installation continues, however no reaction to keyboard inputs.
+Echoz: Ill try that as well
+Echoz: Thanks
+Going with live failsage then just to be sure
+thats failsafe =)
+Echoz: thanks
+Echoz: Lets hope so
+...
+sorry guys, same thing happened within the live environment. went black after a while. maybe I didnt run it long enough yesterday
+Ouroboros: With the live-CD within the live GUI
+jm_: Nothing happens w/ mouse or keyboard inputs
+jm_: sorry. Can reload to see if that makes any difference?
+jm_: at this point I might as well..
+Echos: Ill give it a go
+Echoz: Ok. Ill try with xset dpms later if consoleblank=0 doesnt work
+Echoz: Sweet - Ill try that as well
+...
+Echoz: Died even before I got to the terminal to type setterm -blank 0 -powerdown 0 -powersave off
+Echoz: ok
+Thanks for taking the time
+Echoz: Im not fast enough to type in the setterm cmd before it dies
+Ouroboros: Several times
+Ouroboros: Even switching between DVI and VGA
+Echoz: Even tried disabling some deep-sleep in the BIOS settings along with some ASPM setting to no avail. Yep, correct
+Echoz: A DMS-59 and VGa
+Ouroboros: Yes, tried disconnecting and re-connecting the video cable after it happens
+Echoz: yes
+Echoz: so ssh into the Dell precision from another computer and run the installation from the other computer
+Echoz: ?
+Echoz: Is there a default hostname/ credentials for the live environment to use w/ ssh?
+Ouroboros: Thanks.
+Will DHCP be enabled when starting live then?
+ok
+Echoz: Need to locate another computer to use first, and might need to use the cable on this machine
+Echoz: You tried ssh into a live you have in your office?
+ok, thanks
+Echoz: so ssh live@somethingsomething, and user: user, password: live?
+Echoz: thanks
+Ouroboros: Sorry for the absence. Would need ssh then as the live goes black fairly quickly.
+Ouroboros: yes, not sure yes if Ill have a spare computer on the network that I can use
+yet*
+Any chance the memory could be corrupt? Although, then the ubuntu shouldve failed also?
+Ouroboros: Ok
+Echoz: Live with gui.
+Echoz: Sorry, on my personal comp?
+Ouroboros: Not sure - how can I tell?
+Ouroboros: Ah. Well, Ive used both the non-graphical (pseudo-graphical blue menus) and the graphical one. Not sure if its X
+Ouroboros: No, the installer failed around writing to the hdd. But was running ubuntu 14.04 LTS yesterday for a longer period of time (where I could wake it up again after going into sleep)
+interesting. Got so far in failsafe to set xset -dpms and xset dpms force on (definately X) - and Im runnning the installer now
+and it died!
+Ouroboros: That I dont know. Just said xterm something when I tried to setterm -blank 0 etc..
+*hate the fact that ubuntu works and debian doesnt on this dell precision

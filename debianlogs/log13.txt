@@ -1,0 +1,13 @@
+./runcli.sh
+!connect
+!login mac
+!open tech
+extremely reliable i'd say
+or the occasional host maintenance, but they warn you plenty of time ahead
+you could probably count on your two hands how many times linode had unplanned downtime in its 13 years of existing
+if it's directly related to your linode or your account in particular, it's highly recommended you use the ticket system
+I'd like to get wasted one night and call Linode and cry about being lonely
+then again, I don't need to be wasted to do that
+yay, I got food for my birthday.
+i'm now intrigued what the strangest call was
+I have doubts you will

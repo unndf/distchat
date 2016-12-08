@@ -1,0 +1,84 @@
+./runcli.sh
+!connect
+!login mallory
+!open tech
+is linux-image-* package the correct place to get the default .config for that package? ok, i guess that is a little circular
+i mean, yeah, same thing
+just kinda strange they dont have any default ones in the linux-source-* package
+well, there are some in the source for linux-image, but they are pretty minimal
+otoh, i am somewhat glad that 8-year olds are still aware of irc
+video driver?
+dozer: if live works, then clearly it *can* work, just need to get the right drivers in the right place at the right time
+why would it die at that point? it should only start using the installed drivers after reboot?
+or no?
+live has an installer boot option too
+not sure if thats any different than the normal installer
+(its gonna fail the exact same way as before :)
+with the installer, or just in general?
+yeah, its not a driver issue per se then, just monitor going to power save
+i think i vaguely remember something like this before
+dozer: also maybe something with xset dpms
+dozer: should be "xset -dpms" i guess
+yeah
+hm, why does installing a kernel image sometimes runs /etc/kernel/postinst.d/zz-update-grub, and sometimes not
+i dont know, i cant find a pattern
+well, whatever, not that important right now
+dozer: have you tried unplugging it and plugging it back in again? ;)
+(the video cable)
+dozer: (i meant after it happens)
+hehe
+i always wonder why i am working on the actual console and not ssh
+dozer: user:live ?
+yes
+(a ton of stuff is enabled)
+random weird network daemons that you probably dont want :)
+Echoz: works for me, but its squeeze
+maybe they disabled it (which might be a good idea, heh)
+whats the actualy correct thing to blacklist a module on the kernel command line, i tried nouveau.blacklist=1, that succeeded in not loading it because: nouveau: Unknown parameter `blacklist; i also saw suggested nouveau.blacklist=yes and modprobe.blacklist=nouveau
+i guess the last one?
+which man page
+ok, i will try that, unless this module is not loaded via modprobe
+Echoz: technically, you dont need the display
+well, time to recompile the kernel.... again
+heh
+is there no more init.d ?
+i really should get a newer livecd
+never seen it yet
+sounds vaguely similar to solaris smf
+good, i like smf
+starting to get a bit old though
+are you bringing back enough for everyone?
+dozer: but if live also has the issue, it might be easier to debug it on live first?
+yes
+but you might as well figure it out on live first so that you can cleanly apply the fix later
+since presumably it will also happen on the installed version
+nah, that would more likely cause a kernel panic or similar
+the video card could be broken though
+maybe compare what video driver ubuntu is using?
+also, if you ssh into live after it happens
+perhaps there is something in the logs
+dozer: and the installer you used... is it X or curses?
+well, the curses installer is the one with the pseudo-graphical blue menus
+(i am not sure if there even exists an X installer)
+ok
+dozer: (0) wait until live blanks (2) ssh in, get the logs (3) try running xset -dpms or xset dpms force on in ssh or on command line
+or vbetool dpms on if not in X
+doubt any of that will work, but who knows
+or just have terminal open and type those in
+shrug
+different kernel, drivers, settings, who knows
+dozer: dunno, but it is here: https://en.wikipedia.org/wiki/Debian_version_history#Release_table
+dozer: is the screen off?
+not black or something
+ok
+so it could be in power save, or something crashed, or ...
+and it completely works in some other OS right now?
+well, try some of those ideas ^^
+the installer was also in X?
+i think we really need to see the logs
+figure out how to ssh in there
+dpkg -i *.deb ?
+..
+dozer: did you figure it out
+man, the way gcc package versions are done is incredibly annoying
+specifically e.g. the gcc metapackage that creates links to gcc-*; what if i want an older version? then i have to manually fix all those links
